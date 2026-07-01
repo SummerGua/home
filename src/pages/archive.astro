@@ -279,7 +279,7 @@ const totalPosts = posts.length;
 					Object.entries(groupedPosts)
 						.sort((a, b) => Number(b[0]) - Number(a[0]))
 						.map(([year, yearPosts]) => (
-							<section class="archive-group pixel-panel" data-archive-group data-year={year}>
+							<section class="archive-group" data-archive-group data-year={year}>
 								<div class="archive-heading">
 									<p class="eyebrow">Year</p>
 									<h2 class="section-title">{year}</h2>
@@ -655,11 +655,14 @@ const totalPosts = posts.length;
 	}
 
 	.archive-group {
-		padding: 1.2rem;
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 0.85rem;
+		padding: 0;
 	}
 
 	.archive-heading {
-		margin-bottom: 1rem;
+		margin-bottom: 0.5rem;
 	}
 
 	.archive-list {
@@ -667,18 +670,36 @@ const totalPosts = posts.length;
 		gap: 0.85rem;
 	}
 
+	@media (min-width: 760px) {
+		.archive-group {
+			grid-template-columns: 6.5rem 1fr;
+			gap: 1.25rem;
+			align-items: start;
+		}
+
+		.archive-heading {
+			position: sticky;
+			top: 1rem;
+			margin-bottom: 0;
+			text-align: right;
+			align-self: start;
+		}
+	}
+
 	.archive-item {
 		display: block;
 		padding: 0.9rem 1rem;
-		border: 1px solid var(--line-soft);
-		background: var(--panel-soft);
+		border: 1.5px solid var(--line);
+		background: var(--panel);
 		color: var(--ink);
 		text-decoration: none;
 		border-radius: 2px;
+		box-shadow: 3px 3px 0 var(--shadow);
 		transition:
 			transform 120ms ease,
 			border-color 120ms ease,
-			background-color 120ms ease;
+			background-color 120ms ease,
+			box-shadow 120ms ease;
 	}
 
 	.archive-item[hidden],
@@ -687,9 +708,9 @@ const totalPosts = posts.length;
 	}
 
 	.archive-item:hover {
-		transform: translate(-1px, -1px);
-		border-color: var(--line);
-		background: color-mix(in srgb, var(--accent-soft) 40%, var(--panel));
+		transform: translate(-2px, -2px);
+		background: color-mix(in srgb, var(--accent-soft) 35%, var(--panel));
+		box-shadow: 5px 5px 0 var(--shadow);
 	}
 
 	.archive-item p,
