@@ -1,8 +1,13 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+
+const posts = (await getCollection('blog'))
+	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+	.slice(0, 3);
 ---
 
 <!doctype html>
@@ -13,37 +18,193 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 	<body>
 		<Header />
 		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This template
-				serves as a lightweight, minimally-styled starting point for anyone looking to build a personal
-				website, blog, or portfolio with Astro.
-			</p>
-			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to
-				<a href="https://docs.astro.build/">read the docs</a>
-				or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out
-				<a href="https://github.com/Charca/astro-blog-template">astro-blog-template</a>
-				by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
+			<div class="page-shell">
+				<section class="hero pixel-panel">
+					<div class="hero-copy">
+						<p class="eyebrow">Personal Blog / Markdown</p>
+						<h1>像素感极简博客骨架，先把结构和阅读体验立住。</h1>
+						<p class="hero-text">
+							这是一版可继续调整视觉方向的基线：首页、文章列表和文章详情已经按移动端优先整理，
+							现在重点是信息层级、留白和阅读节奏，而不是一次性把风格做死。
+						</p>
+						<div class="hero-actions">
+							<a class="button-link" href="/blog">进入博客</a>
+							<a class="button-link ghost" href="/about">查看关于页</a>
+						</div>
+					</div>
+					<div class="status-panel">
+						<p class="eyebrow">Current Build</p>
+						<ul class="status-list">
+							<li>Astro + Markdown 内容流</li>
+							<li>响应式基础版式</li>
+							<li>像素感边框与配色变量</li>
+							<li>后续可替换字体和主题色</li>
+						</ul>
+					</div>
+				</section>
+
+				<section class="intro-grid">
+					<article class="pixel-panel intro-card">
+						<p class="eyebrow">Writing Focus</p>
+						<h2 class="section-title">内容优先</h2>
+						<p>
+							文章使用 Markdown 管理，页面结构保持轻量，后续加标签、目录、归档或 RSS 都不会太重。
+						</p>
+					</article>
+					<article class="pixel-panel intro-card">
+						<p class="eyebrow">Mobile First</p>
+						<h2 class="section-title">先适配手机</h2>
+						<p>
+							导航、卡片、正文宽度和按钮布局都以窄屏为基线，桌面端只做增强，不依赖复杂交互。
+						</p>
+					</article>
+				</section>
+
+				<section class="recent-section pixel-panel">
+					<div class="recent-header">
+						<div>
+							<p class="eyebrow">Recent Posts</p>
+							<h2 class="section-title">最近文章</h2>
+						</div>
+						<a class="button-link ghost recent-link" href="/blog">查看全部</a>
+					</div>
+					<div class="post-list">
+						{
+							posts.map((post) => (
+								<a class="post-card" href={`/blog/${post.id}/`}>
+									<p class="post-date">{post.data.pubDate.toLocaleDateString('zh-CN')}</p>
+									<h3>{post.data.title}</h3>
+									<p class="post-description">{post.data.description}</p>
+								</a>
+							))
+						}
+					</div>
+				</section>
+			</div>
 		</main>
 		<Footer />
 	</body>
 </html>
+
+<style>
+	.hero,
+	.recent-section,
+	.intro-card {
+		padding: 1.2rem;
+	}
+
+	.hero {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.hero-text {
+		max-width: 36rem;
+		font-size: 1rem;
+		color: var(--muted);
+	}
+
+	.hero-actions {
+		display: grid;
+		gap: 0.75rem;
+		margin-top: 1.5rem;
+	}
+
+	.status-panel {
+		padding: 1rem;
+		border: 2px dashed var(--line);
+		background: rgba(232, 220, 196, 0.35);
+	}
+
+	.status-list {
+		margin: 0.8rem 0 0;
+		padding-left: 1.1rem;
+	}
+
+	.status-list li + li {
+		margin-top: 0.45rem;
+	}
+
+	.intro-grid {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.recent-header {
+		display: grid;
+		gap: 1rem;
+		margin-bottom: 1rem;
+	}
+
+	.post-list {
+		display: grid;
+		gap: 0.9rem;
+	}
+
+	.post-card {
+		display: block;
+		padding: 1rem;
+		border: 2px solid var(--line);
+		background: rgba(255, 249, 236, 0.65);
+		text-decoration: none;
+		transition:
+			transform 120ms ease,
+			box-shadow 120ms ease,
+			background-color 120ms ease;
+	}
+
+	.post-card:hover {
+		transform: translate(-1px, -1px);
+		box-shadow: 4px 4px 0 var(--shadow);
+		background: var(--panel);
+	}
+
+	.post-date {
+		margin-bottom: 0.45rem;
+		font-size: 0.78rem;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+
+	.post-description {
+		margin-bottom: 0;
+		color: var(--muted);
+	}
+
+	@media (min-width: 760px) {
+		.hero,
+		.recent-section,
+		.intro-card {
+			padding: 1.5rem;
+		}
+
+		.hero {
+			grid-template-columns: minmax(0, 1.7fr) minmax(16rem, 0.9fr);
+			align-items: end;
+		}
+
+		.hero-actions {
+			display: flex;
+			flex-wrap: wrap;
+		}
+
+		.intro-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		.recent-header {
+			grid-template-columns: minmax(0, 1fr) auto;
+			align-items: end;
+		}
+
+		.post-list {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+
+		.recent-link {
+			width: auto;
+		}
+	}
+</style>
