@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
+import ThemeScript from '../components/ThemeScript.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
 const posts = (await getCollection('blog'))
@@ -14,6 +15,7 @@ const posts = (await getCollection('blog'))
 <html lang="en">
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<ThemeScript />
 	</head>
 	<body>
 		<Header />
@@ -21,58 +23,54 @@ const posts = (await getCollection('blog'))
 			<div class="page-shell">
 				<section class="hero pixel-panel">
 					<div class="hero-copy">
-						<p class="eyebrow">Personal Blog / Markdown</p>
-						<h1>像素感极简博客骨架，先把结构和阅读体验立住。</h1>
-						<p class="hero-text">
-							这是一版可继续调整视觉方向的基线：首页、文章列表和文章详情已经按移动端优先整理，
-							现在重点是信息层级、留白和阅读节奏，而不是一次性把风格做死。
-						</p>
+						<p class="eyebrow">SummerGua / Notes</p>
+						<h1>记录前端、JavaScript 和日常学习笔记。</h1>
+						<p class="hero-text">一个用 Markdown 写内容的个人博客，目前收录的是正在整理的技术笔记。</p>
 						<div class="hero-actions">
-							<a class="button-link" href="/blog">进入博客</a>
-							<a class="button-link ghost" href="/about">查看关于页</a>
+							<a class="button-link" href="/blog">进入 Posts</a>
+							<a class="button-link ghost" href="/archive">打开 Archive</a>
 						</div>
 					</div>
 					<div class="status-panel">
-						<p class="eyebrow">Current Build</p>
+						<p class="eyebrow">Current Focus</p>
 						<ul class="status-list">
-							<li>Astro + Markdown 内容流</li>
-							<li>响应式基础版式</li>
-							<li>像素感边框与配色变量</li>
-							<li>后续可替换字体和主题色</li>
+							<li>Markdown 写作</li>
+							<li>JavaScript 笔记整理</li>
+							<li>移动端优先阅读体验</li>
+							<li>极简像素风界面</li>
 						</ul>
 					</div>
 				</section>
 
 				<section class="intro-grid">
 					<article class="pixel-panel intro-card">
-						<p class="eyebrow">Writing Focus</p>
-						<h2 class="section-title">内容优先</h2>
-						<p>
-							文章使用 Markdown 管理，页面结构保持轻量，后续加标签、目录、归档或 RSS 都不会太重。
-						</p>
+						<p class="eyebrow">Now Reading</p>
+						<h2 class="section-title">最近在写</h2>
+						<p>目前这站以技术笔记为主，先从 Web Workers 这样的基础主题开始慢慢补全。</p>
 					</article>
 					<article class="pixel-panel intro-card">
-						<p class="eyebrow">Mobile First</p>
-						<h2 class="section-title">先适配手机</h2>
-						<p>
-							导航、卡片、正文宽度和按钮布局都以窄屏为基线，桌面端只做增强，不依赖复杂交互。
-						</p>
+						<p class="eyebrow">Site Style</p>
+						<h2 class="section-title">页面风格</h2>
+						<p>界面保持极简和硬边框节奏，重点还是让文章在手机和桌面上都容易阅读。</p>
 					</article>
 				</section>
 
 				<section class="recent-section pixel-panel">
 					<div class="recent-header">
 						<div>
-							<p class="eyebrow">Recent Posts</p>
+							<p class="eyebrow">Latest Post</p>
 							<h2 class="section-title">最近文章</h2>
 						</div>
-						<a class="button-link ghost recent-link" href="/blog">查看全部</a>
+						<a class="button-link ghost recent-link" href="/blog">查看 Posts</a>
 					</div>
 					<div class="post-list">
 						{
 							posts.map((post) => (
 								<a class="post-card" href={`/blog/${post.id}/`}>
-									<p class="post-date">{post.data.pubDate.toLocaleDateString('zh-CN')}</p>
+									<div class="post-meta">
+										<span class="post-category">{post.data.category}</span>
+										<p class="post-date">{post.data.pubDate.toLocaleDateString('en-US')}</p>
+									</div>
 									<h3>{post.data.title}</h3>
 									<p class="post-description">{post.data.description}</p>
 								</a>
@@ -160,12 +158,32 @@ const posts = (await getCollection('blog'))
 	}
 
 	.post-date {
-		margin-bottom: 0.45rem;
+		margin: 0;
 		font-size: 0.78rem;
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
 		color: var(--muted);
+	}
+
+	.post-meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem 0.75rem;
+		margin-bottom: 0.45rem;
+	}
+
+	.post-category {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.18rem 0.45rem;
+		border: 1px solid var(--line);
+		background: var(--accent-soft);
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
 	}
 
 	.post-description {

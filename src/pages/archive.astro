@@ -1,0 +1,136 @@
+---
+import { getCollection } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import Header from '../components/Header.astro';
+import ThemeScript from '../components/ThemeScript.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+
+const posts = (await getCollection('blog')).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+
+const groupedPosts = posts.reduce<Record<string, typeof posts>>((groups, post) => {
+	const year = String(post.data.pubDate.getFullYear());
+	groups[year] ??= [];
+	groups[year].push(post);
+	return groups;
+}, {});
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Archive | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+		<ThemeScript />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<div class="page-shell">
+				{
+					Object.entries(groupedPosts)
+						.sort((a, b) => Number(b[0]) - Number(a[0]))
+						.map(([year, yearPosts]) => (
+						<section class="archive-group pixel-panel">
+							<div class="archive-heading">
+								<p class="eyebrow">Year</p>
+								<h2 class="section-title">{year}</h2>
+							</div>
+							<div class="archive-list">
+								{yearPosts.map((post) => (
+									<a class="archive-item" href={`/blog/${post.id}/`}>
+										<div class="archive-meta">
+											<span class="archive-category">{post.data.category}</span>
+											<p class="archive-date">
+												<FormattedDate date={post.data.pubDate} />
+											</p>
+										</div>
+										<h3>{post.data.title}</h3>
+										<p>{post.data.description}</p>
+									</a>
+								))}
+							</div>
+						</section>
+					))
+				}
+			</div>
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style>
+	.archive-group {
+		padding: 1.2rem;
+	}
+
+	.archive-heading {
+		margin-bottom: 1rem;
+	}
+
+	.archive-list {
+		display: grid;
+		gap: 0.85rem;
+	}
+
+	.archive-item {
+		display: block;
+		padding: 1rem;
+		border: 2px solid var(--line);
+		background: color-mix(in srgb, var(--panel) 76%, transparent);
+		text-decoration: none;
+		transition:
+			transform 120ms ease,
+			box-shadow 120ms ease;
+	}
+
+	.archive-item:hover {
+		transform: translate(-1px, -1px);
+		box-shadow: 4px 4px 0 var(--shadow);
+	}
+
+	.archive-item p,
+	.archive-item h3 {
+		margin-bottom: 0;
+	}
+
+	.archive-item h3 {
+		margin-top: 0.3rem;
+		margin-bottom: 0.45rem;
+	}
+
+	.archive-meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem 0.75rem;
+	}
+
+	.archive-category {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.18rem 0.45rem;
+		border: 1px solid var(--line);
+		background: var(--accent-soft);
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.archive-date {
+		font-size: 0.78rem;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+
+	@media (min-width: 760px) {
+		.archive-group {
+			padding: 1.4rem;
+		}
+	}
+</style>

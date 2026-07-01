@@ -9,18 +9,21 @@ import HeaderLink from './HeaderLink.astro';
 			<span class="brand-mark" aria-hidden="true"></span>
 			<span>{SITE_TITLE}</span>
 		</a>
-		<div class="internal-links">
-			<HeaderLink href="/">Home</HeaderLink>
-			<HeaderLink href="/blog">Blog</HeaderLink>
-			<HeaderLink href="/about">About</HeaderLink>
+		<div class="nav-actions">
+			<div class="internal-links">
+				<HeaderLink href="/blog">Posts</HeaderLink>
+				<HeaderLink href="/archive">Archive</HeaderLink>
+				<HeaderLink href="/about">About</HeaderLink>
+			</div>
+			<button class="theme-toggle" type="button" aria-label="Toggle dark mode" data-theme-toggle>
+				<span class="theme-icon sun" aria-hidden="true">☀</span>
+				<span class="theme-icon moon" aria-hidden="true">☾</span>
+			</button>
 		</div>
 	</nav>
 </header>
 <style>
 	header {
-		position: sticky;
-		top: 0;
-		z-index: 10;
 		padding: 1rem 1rem 0;
 	}
 	nav {
@@ -29,8 +32,7 @@ import HeaderLink from './HeaderLink.astro';
 		gap: 0.9rem;
 		padding: 0.9rem 1rem;
 		border: 2px solid var(--ink);
-		background: rgba(245, 240, 226, 0.92);
-		backdrop-filter: blur(10px);
+		background: var(--panel);
 		box-shadow: 6px 6px 0 var(--shadow);
 	}
 	.brand {
@@ -58,8 +60,48 @@ import HeaderLink from './HeaderLink.astro';
 		flex-wrap: wrap;
 		gap: 0.6rem;
 	}
+	.nav-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.75rem;
+	}
 	.internal-links :global(a) {
 		min-width: 4.5rem;
+	}
+	.theme-toggle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.7rem;
+		height: 2.7rem;
+		padding: 0;
+		border: 2px solid var(--ink);
+		background: var(--panel);
+		color: var(--ink);
+		box-shadow: 3px 3px 0 transparent;
+		cursor: pointer;
+		transition:
+			transform 120ms ease,
+			box-shadow 120ms ease,
+			background-color 120ms ease;
+	}
+	.theme-toggle:hover {
+		transform: translate(-1px, -1px);
+		box-shadow: 4px 4px 0 var(--shadow);
+	}
+	.theme-icon {
+		font-size: 1rem;
+		line-height: 1;
+	}
+	.moon {
+		display: none;
+	}
+	:global(html[data-theme='dark']) .sun {
+		display: none;
+	}
+	:global(html[data-theme='dark']) .moon {
+		display: inline;
 	}
 	@media (min-width: 760px) {
 		header {

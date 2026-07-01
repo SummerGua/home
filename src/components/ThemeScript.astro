@@ -1,0 +1,34 @@
+<script is:inline>
+	(() => {
+		const storageKey = 'pixel-notes-theme';
+		const root = document.documentElement;
+		const getSystemTheme = () =>
+			window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+		const applyTheme = (theme) => {
+			root.dataset.theme = theme;
+		};
+
+		const savedTheme = localStorage.getItem(storageKey);
+		applyTheme(savedTheme || getSystemTheme());
+
+		const toggleTheme = () => {
+			const nextTheme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+			localStorage.setItem(storageKey, nextTheme);
+			applyTheme(nextTheme);
+		};
+
+		const bindToggle = () => {
+			const button = document.querySelector('[data-theme-toggle]');
+			if (!button || button.dataset.bound === 'true') return;
+			button.dataset.bound = 'true';
+			button.addEventListener('click', toggleTheme);
+		};
+
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', bindToggle, { once: true });
+		} else {
+			bindToggle();
+		}
+	})();
+</script>

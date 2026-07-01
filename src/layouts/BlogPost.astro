@@ -4,35 +4,42 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
+import ThemeScript from '../components/ThemeScript.astro';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, headings = [] } = Astro.props;
+const tocHeadings = headings.filter((heading) => heading.depth <= 3);
 ---
 
 <html lang="en">
 	<head>
 		<BaseHead title={title} description={description} />
+		<ThemeScript />
 		<style>
 			.article-shell {
+				--article-width: min(100%, calc(var(--reading-width) + 84px));
 				display: grid;
-				gap: 1rem;
+				gap: 0.85rem;
 			}
 
 			.article-hero,
 			.article-body {
-				padding: 1.2rem;
+				padding: 1rem 1.1rem;
 			}
 
 			.article-hero {
 				display: grid;
-				gap: 0.9rem;
+				gap: 0.65rem;
+				width: var(--article-width);
+				justify-self: center;
 			}
 
 			.meta {
 				display: flex;
 				flex-wrap: wrap;
-				gap: 0.75rem 1rem;
+				align-items: center;
+				gap: 0.45rem 0.75rem;
 				font-size: 0.78rem;
 				font-weight: 700;
 				letter-spacing: 0.12em;
@@ -41,42 +48,163 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 			}
 
 			.article-description {
-				max-width: 42rem;
+				max-width: 46rem;
 				margin-bottom: 0;
 				color: var(--muted);
+				font-size: 0.98rem;
+				line-height: 1.6;
+			}
+
+			.category {
+				display: inline-flex;
+				align-items: center;
+				padding: 0.18rem 0.45rem;
+				border: 1px solid var(--line);
+				background: var(--accent-soft);
+				color: var(--ink);
 			}
 
 			.article-body {
-				width: min(100%, var(--reading-width));
+				width: var(--article-width);
 				justify-self: center;
+			}
+
+			.article-toc {
+				display: none;
+				position: fixed;
+				left: max(1.25rem, calc((100vw - min(var(--content-width), calc(100% - 3rem))) / 2 - 15rem));
+				top: 8.75rem;
+				z-index: 2;
+				width: 12.5rem;
+				overflow: hidden;
+				padding: 0;
+				background: transparent;
+				border: 0;
+				box-shadow: none;
+			}
+
+			.article-toc nav {
+				border-left: 2px solid color-mix(in srgb, var(--ink) 20%, transparent);
+				padding-left: 0.9rem;
+			}
+
+			.article-toc nav ul {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+				display: grid;
+				gap: 0.55rem;
+				min-width: 0;
+			}
+
+			.article-toc nav li {
+				padding-left: 0;
+				min-width: 0;
+			}
+
+			.article-toc nav li.depth-3 {
+				padding-left: 0.9rem;
+			}
+
+			.article-toc a {
+				display: block;
+				width: 100%;
+				color: var(--muted);
+				text-decoration: none;
+				font-size: 0.92rem;
+				line-height: 1.4;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+
+			.article-toc a:hover {
+				color: var(--ink);
+				text-decoration: underline;
+				text-decoration-thickness: 2px;
+			}
+
+			.article-toc a.active {
+				color: var(--ink);
+				font-weight: 700;
 			}
 
 			.prose :global(h2),
 			.prose :global(h3),
 			.prose :global(h4) {
-				margin-top: 2rem;
+				margin-top: 1.8rem;
+				scroll-margin-top: 1.5rem;
 			}
 
 			.prose :global(p),
 			.prose :global(ul),
 			.prose :global(ol) {
-				margin-bottom: 1.1rem;
+				margin-bottom: 1rem;
+			}
+
+			.prose :global(blockquote p) {
+				margin-bottom: 0.7rem;
+			}
+
+			.prose :global(blockquote p:last-child) {
+				margin-bottom: 0;
+			}
+
+			.prose :global(p) {
+				max-width: 46rem;
+			}
+
+			.prose :global(ul),
+			.prose :global(ol),
+			.prose :global(pre),
+			.prose :global(blockquote) {
+				max-width: 46rem;
 			}
 
 			.prose :global(a) {
+				color: var(--ink);
 				text-decoration: underline;
+				text-decoration-color: var(--accent);
 				text-decoration-thickness: 2px;
 				text-underline-offset: 0.16em;
+				background-image: linear-gradient(
+					to top,
+					color-mix(in srgb, var(--accent-soft) 48%, transparent) 0.5em,
+					transparent 0.5em
+				);
+				transition:
+					color 120ms ease,
+					text-decoration-color 120ms ease,
+					background-size 120ms ease;
+			}
+
+			.prose :global(a:hover) {
+				color: var(--accent);
+				text-decoration-color: var(--accent);
+			}
+
+			.article-hero h1 {
+				font-size: clamp(1.9rem, 4.2vw, 3rem);
+				line-height: 1.08;
+				letter-spacing: -0.035em;
+				max-width: 46rem;
+				margin-bottom: 0.15rem;
 			}
 
 			.last-updated-on {
 				font-style: italic;
 			}
 
+			@media (min-width: 1100px) {
+				.article-toc {
+					display: block;
+				}
+			}
+
 			@media (min-width: 760px) {
 				.article-hero,
 				.article-body {
-					padding: 1.5rem;
+					padding: 1.2rem 1.45rem;
 				}
 			}
 		</style>
@@ -87,9 +215,9 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 		<main>
 			<article class="article-shell">
 				<div class="article-hero pixel-panel">
-					<p class="eyebrow">Blog Entry</p>
 					<h1>{title}</h1>
 					<div class="meta">
+						<div class="category">{Astro.props.category}</div>
 						<div>
 							<FormattedDate date={pubDate} />
 						</div>
@@ -103,11 +231,62 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 					</div>
 					<p class="article-description">{description}</p>
 				</div>
+				{
+					tocHeadings.length > 0 && (
+						<aside class="article-toc" aria-label="Table of contents">
+							<nav>
+								<ul>
+									{tocHeadings.map((heading) => (
+										<li class={`depth-${heading.depth}`}>
+											<a href={`#${heading.slug}`} data-toc-link={heading.slug}>
+												{heading.text}
+											</a>
+										</li>
+									))}
+								</ul>
+							</nav>
+						</aside>
+					)
+				}
 				<div class="article-body pixel-panel prose">
 					<slot />
 				</div>
 			</article>
 		</main>
-		<Footer />
-	</body>
+			<Footer />
+		</body>
 </html>
+
+<script>
+	const headings = Array.from(document.querySelectorAll('.prose h2, .prose h3'));
+	const tocLinks = Array.from(document.querySelectorAll('[data-toc-link]'));
+
+	if (headings.length && tocLinks.length) {
+		const tocMap = new Map(tocLinks.map((link) => [link.dataset.tocLink, link]));
+
+		const setActiveLink = (id) => {
+			for (const link of tocLinks) {
+				link.classList.toggle('active', link.dataset.tocLink === id);
+			}
+		};
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const visible = entries
+					.filter((entry) => entry.isIntersecting)
+					.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+
+				if (visible[0]?.target?.id) {
+					setActiveLink(visible[0].target.id);
+				}
+			},
+			{
+				rootMargin: '-18% 0px -65% 0px',
+				threshold: [0, 1],
+			},
+		);
+
+		for (const heading of headings) observer.observe(heading);
+		if (headings[0]?.id) setActiveLink(headings[0].id);
+	}
+</script>

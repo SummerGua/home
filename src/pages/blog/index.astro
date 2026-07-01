@@ -4,6 +4,7 @@ import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/Footer.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import Header from '../../components/Header.astro';
+import ThemeScript from '../../components/ThemeScript.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 
 const posts = (await getCollection('blog')).sort(
@@ -15,26 +16,37 @@ const posts = (await getCollection('blog')).sort(
 <html lang="en">
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<ThemeScript />
 	</head>
 	<body>
 		<Header />
 		<main>
 			<div class="page-shell">
-				<section class="listing-hero pixel-panel">
-					<p class="eyebrow">Archive</p>
-					<h1>博客文章</h1>
-					<p class="listing-copy">
-						这里放所有 Markdown 文章。现在是一版干净的归档页，方便你之后继续决定更强的像素主题表达。
-					</p>
+				<section class="search-shell">
+					<input
+						id="post-search"
+						class="search-input"
+						type="search"
+						placeholder="Search posts, categories, or keywords"
+						aria-label="Search posts"
+					/>
+					<p id="search-empty" class="search-empty" hidden>没有匹配结果。</p>
 				</section>
-				<section class="post-grid">
+				<section class="post-grid" id="post-grid">
 					{
 						posts.map((post) => (
-							<article class="post-item pixel-panel">
+							<article
+								class="post-item pixel-panel"
+								data-post-card
+								data-search={`${post.data.title} ${post.data.description} ${post.data.category}`.toLowerCase()}
+							>
 								<a class="post-link" href={`/blog/${post.id}/`}>
-									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
-									</p>
+									<div class="meta-row">
+										<span class="category">{post.data.category}</span>
+										<p class="date">
+											<FormattedDate date={post.data.pubDate} />
+										</p>
+									</div>
 									<h2 class="title">{post.data.title}</h2>
 									<p class="description">{post.data.description}</p>
 									<span class="read-more">Read entry</span>
@@ -50,15 +62,8 @@ const posts = (await getCollection('blog')).sort(
 </html>
 
 <style>
-	.listing-hero,
 	.post-item {
 		padding: 1.2rem;
-	}
-
-	.listing-copy {
-		max-width: 40rem;
-		margin-bottom: 0;
-		color: var(--muted);
 	}
 
 	.post-grid {
@@ -72,12 +77,32 @@ const posts = (await getCollection('blog')).sort(
 	}
 
 	.date {
-		margin-bottom: 0.6rem;
+		margin: 0;
 		font-size: 0.78rem;
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
 		color: var(--muted);
+	}
+
+	.meta-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem 0.75rem;
+		margin-bottom: 0.6rem;
+	}
+
+	.category {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.18rem 0.45rem;
+		border: 1px solid var(--line);
+		background: var(--accent-soft);
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
 	}
 
 	.title {
@@ -110,7 +135,6 @@ const posts = (await getCollection('blog')).sort(
 	}
 
 	@media (min-width: 760px) {
-		.listing-hero,
 		.post-item {
 			padding: 1.4rem;
 		}
@@ -120,3 +144,25 @@ const posts = (await getCollection('blog')).sort(
 		}
 	}
 </style>
+
+<script>
+	const searchInput = document.querySelector('#post-search');
+	const searchEmpty = document.querySelector('#search-empty');
+	const cards = Array.from(document.querySelectorAll('[data-post-card]'));
+
+	if (searchInput && searchEmpty) {
+		searchInput.addEventListener('input', (event) => {
+			const query = event.currentTarget.value.trim().toLowerCase();
+			let visibleCount = 0;
+
+			for (const card of cards) {
+				const haystack = card.dataset.search || '';
+				const matched = !query || haystack.includes(query);
+				card.hidden = !matched;
+				if (matched) visibleCount += 1;
+			}
+
+			searchEmpty.hidden = visibleCount !== 0;
+		});
+	}
+</script>
