@@ -1,7 +1,7 @@
 ---
 title: 'Webpack tapable 原理'
 description: 'Webpack 的插件系统底层依赖 tapable。通过一个最小实现，理解 hook / tap / call 三者的关系，并自己写一个 Webpack 插件。'
-category: 'Frontend'
+tags: 'Frontend'
 pubDate: 'Aug 4 2025'
 ---
 

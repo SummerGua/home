@@ -1,7 +1,7 @@
 ---
 title: 'classNames 库'
 description: 'React 组件里组合 CSS Modules 和 Tailwind 类名时，classNames 可以很方便地处理字符串拼接。'
-category: 'React'
+tags: ['React', 'Frontend']
 pubDate: 'Jul 15 2025'
 ---
 

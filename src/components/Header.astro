@@ -11,8 +11,8 @@ import HeaderLink from './HeaderLink.astro';
 		</a>
 		<div class="nav-actions">
 			<div class="internal-links">
-				<HeaderLink href="/blog">Posts</HeaderLink>
-				<HeaderLink href="/categories">Categories</HeaderLink>
+				<HeaderLink href="/posts">Posts</HeaderLink>
+				<HeaderLink href="/tags">Tags</HeaderLink>
 				<HeaderLink href="/archive">Archive</HeaderLink>
 				<HeaderLink href="/about">About</HeaderLink>
 			</div>
@@ -70,6 +70,7 @@ import HeaderLink from './HeaderLink.astro';
 	}
 	.internal-links :global(a) {
 		min-width: 4.5rem;
+		text-align: center;
 	}
 	.theme-toggle {
 		display: inline-flex;

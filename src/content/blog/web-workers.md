@@ -1,7 +1,7 @@
 ---
 title: 'Web Workers'
 description: 'Web Workers 允许在后台线程运行脚本，把繁重计算从主线程抽离出来，但 worker 中没有 Window 对象。'
-category: 'JavaScript'
+tags: 'JavaScript'
 pubDate: 'Jul 18 2024'
 ---
 

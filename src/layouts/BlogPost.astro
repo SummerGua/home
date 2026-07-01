@@ -8,7 +8,7 @@ import ThemeScript from '../components/ThemeScript.astro';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, updatedDate, heroImage, headings = [] } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, tags = [], headings = [] } = Astro.props;
 const tocHeadings = headings.filter((heading) => heading.depth <= 3);
 ---
 
@@ -362,7 +362,9 @@ const tocHeadings = headings.filter((heading) => heading.depth <= 3);
 					</button>
 					<h1>{title}</h1>
 					<div class="meta">
-						<div class="category">{Astro.props.category}</div>
+						{tags.map((tag) => (
+							<div class="category">{tag}</div>
+						))}
 						<div>
 							<FormattedDate date={pubDate} />
 						</div>
@@ -415,7 +417,7 @@ const tocHeadings = headings.filter((heading) => heading.depth <= 3);
 				return;
 			}
 
-			window.location.href = '/blog';
+			window.location.href = '/posts';
 		});
 	}
 

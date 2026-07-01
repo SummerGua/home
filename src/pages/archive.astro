@@ -200,14 +200,8 @@ const totalPosts = posts.length;
 									</div>
 									<div class="heatmap-segments">
 										{view.segments.map((seg) => seg.type === 'gap' ? (
-											<div class="heatmap-gap" role="presentation" aria-label={`${seg.count} empty months between ${seg.fromLabel} and ${seg.toLabel}`}>
-												<span class="gap-dots" aria-hidden="true">
-													<span></span><span></span><span></span>
-												</span>
-												<span class="gap-label">
-													{seg.count} quiet months
-													<span class="gap-range">{seg.fromLabel} → {seg.toLabel}</span>
-												</span>
+											<div class="heatmap-gap" role="presentation" aria-label={`${seg.count} quiet months between ${seg.fromLabel} and ${seg.toLabel}`}>
+												<span class="gap-label">··· {seg.count} mo ···</span>
 											</div>
 										) : (
 											<div class="heatmap-cluster">
@@ -294,12 +288,16 @@ const totalPosts = posts.length;
 									{yearPosts.map((post) => (
 										<a
 											class="archive-item"
-											href={`/blog/${post.id}/`}
+											href={`/posts/${post.id}/`}
 											data-archive-item
 											data-date={toDayKey(post.data.pubDate)}
 										>
 											<div class="archive-meta">
-												<span class="archive-category">{post.data.category}</span>
+												<ul class="archive-category-list">
+													{post.data.tags.map((tag) => (
+														<li class="archive-category">{tag}</li>
+													))}
+												</ul>
 												<p class="archive-date">
 													<FormattedDate date={post.data.pubDate} />
 												</p>
@@ -385,6 +383,11 @@ const totalPosts = posts.length;
 		overflow-y: hidden;
 		padding-bottom: 0.35rem;
 		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+	}
+
+	.heatmap-scroll::-webkit-scrollbar {
+		display: none;
 	}
 
 	.heatmap-scroll[hidden] {
@@ -704,6 +707,15 @@ const totalPosts = posts.length;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 0.5rem 0.75rem;
+	}
+
+	.archive-category-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
 	}
 
 	.archive-category {

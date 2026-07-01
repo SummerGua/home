@@ -27,6 +27,8 @@ const posts = (await getCollection('blog')).sort(
 						<svg
 							class="search-icon"
 							viewBox="0 0 24 24"
+							width="16"
+							height="16"
 							fill="none"
 							stroke="currentColor"
 							stroke-width="2"
@@ -53,16 +55,20 @@ const posts = (await getCollection('blog')).sort(
 							<article
 								class="post-item pixel-panel"
 								data-post-card
-								data-search={`${post.data.title} ${post.data.description} ${post.data.category}`.toLowerCase()}
+								data-search={`${post.data.title} ${post.data.description} ${post.data.tags.join(' ')}`.toLowerCase()}
 							>
-								<a class="post-link" href={`/blog/${post.id}/`}>
+								<a class="post-link" href={`/posts/${post.id}/`}>
 									<p class="date">
 										<FormattedDate date={post.data.pubDate} />
 									</p>
 									<h2 class="title">{post.data.title}</h2>
 									<p class="description">{post.data.description}</p>
 									<div class="card-footer">
-										<span class="category">{post.data.category}</span>
+										<ul class="category-list">
+											{post.data.tags.map((tag) => (
+												<li class="category">{tag}</li>
+											))}
+										</ul>
 									</div>
 								</a>
 							</article>
@@ -79,6 +85,10 @@ const posts = (await getCollection('blog')).sort(
 	.post-item {
 		padding: 1.2rem;
 		display: flex;
+	}
+
+	.post-item[hidden] {
+		display: none;
 	}
 
 	.post-link {
@@ -119,6 +129,15 @@ const posts = (await getCollection('blog')).sort(
 	.post-grid {
 		display: grid;
 		gap: 1rem;
+	}
+
+	.category-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
 	}
 
 	.category {

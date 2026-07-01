@@ -1,7 +1,7 @@
 ---
 title: 'vscode:// 协议'
 description: '为什么在浏览器中输入 vscode:// 可以打开 VS Code，以及 VS Code 如何注册自定义协议处理器。'
-category: 'Tooling'
+tags: 'Tooling'
 pubDate: 'Jul 19 2025'
 ---
 

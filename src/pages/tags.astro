@@ -11,19 +11,19 @@ const posts = (await getCollection('blog')).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 
-const categories = Array.from(new Set(posts.map((post) => post.data.category))).sort((a, b) =>
+const categories = Array.from(new Set(posts.flatMap((post) => post.data.tags))).sort((a, b) =>
 	a.localeCompare(b),
 );
-const categoryCounts = categories.map((category) => ({
-	category,
-	count: posts.filter((post) => post.data.category === category).length,
+const categoryCounts = categories.map((tag) => ({
+	tag,
+	count: posts.filter((post) => post.data.tags.includes(tag)).length,
 }));
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={`Categories | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+		<BaseHead title={`Tags | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
 		<ThemeScript />
 	</head>
 	<body>
@@ -31,37 +31,41 @@ const categoryCounts = categories.map((category) => ({
 		<main>
 			<div class="page-shell">
 				<section class="filters pixel-panel">
-					<div class="filter-row" role="tablist" aria-label="Filter posts by category">
+					<div class="filter-row" role="tablist" aria-label="Filter posts by tag">
 						<button class="filter-chip active" type="button" data-filter="all" aria-pressed="true">
 							All ({posts.length})
 						</button>
 						{
-							categoryCounts.map(({ category, count }) => (
+							categoryCounts.map(({ tag, count }) => (
 								<button
 									class="filter-chip"
 									type="button"
-									data-filter={category}
+									data-filter={tag}
 									aria-pressed="false"
 								>
-									{category} ({count})
+									{tag} ({count})
 								</button>
 							))
 						}
 					</div>
 				</section>
 
-				<section class="post-grid" id="category-post-grid">
+				<section class="post-grid" id="tag-post-grid">
 					{
 						posts.map((post) => (
-							<article class="post-item pixel-panel" data-post-card data-category={post.data.category}>
-								<a class="post-link" href={`/blog/${post.id}/`}>
+							<article class="post-item pixel-panel" data-post-card data-tags={post.data.tags.join('|')}>
+								<a class="post-link" href={`/posts/${post.id}/`}>
 									<p class="date">
 										<FormattedDate date={post.data.pubDate} />
 									</p>
 									<h2 class="title">{post.data.title}</h2>
 									<p class="description">{post.data.description}</p>
 									<div class="card-footer">
-										<span class="category">{post.data.category}</span>
+										<ul class="category-list">
+											{post.data.tags.map((tag) => (
+												<li class="category">{tag}</li>
+											))}
+										</ul>
 									</div>
 								</a>
 							</article>
@@ -69,7 +73,7 @@ const categoryCounts = categories.map((category) => ({
 					}
 				</section>
 
-				<p id="filter-empty" class="filter-empty pixel-panel" hidden>No posts in this category yet.</p>
+				<p id="filter-empty" class="filter-empty pixel-panel" hidden>No posts with this tag yet.</p>
 			</div>
 		</main>
 		<Footer />
@@ -128,11 +132,24 @@ const categoryCounts = categories.map((category) => ({
 		display: flex;
 	}
 
+	.post-item[hidden] {
+		display: none;
+	}
+
 	.post-link {
 		display: flex;
 		flex-direction: column;
 		width: 100%;
 		text-decoration: none;
+	}
+
+	.category-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
 	}
 
 	.category {
@@ -209,18 +226,19 @@ const categoryCounts = categories.map((category) => ({
 	const cards = Array.from(document.querySelectorAll('[data-post-card]'));
 	const emptyState = document.querySelector('#filter-empty');
 
-	const applyFilter = (selectedCategory) => {
+	const applyFilter = (selectedTag) => {
 		let count = 0;
 
 		for (const button of filterButtons) {
-			const active = button.dataset.filter === selectedCategory;
+			const active = button.dataset.filter === selectedTag;
 			button.classList.toggle('active', active);
 			button.setAttribute('aria-pressed', String(active));
 		}
 
 		for (const card of cards) {
+			const cardTags = (card.dataset.tags || '').split('|').filter(Boolean);
 			const matched =
-				selectedCategory === 'all' || card.dataset.category === selectedCategory;
+				selectedTag === 'all' || cardTags.includes(selectedTag);
 			card.hidden = !matched;
 			if (matched) count += 1;
 		}

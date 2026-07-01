@@ -52,6 +52,10 @@ body {
 		linear-gradient(color-mix(in srgb, var(--ink) 4%, transparent) 1px, transparent 1px),
 		var(--bg);
 	background-size: auto, 26px 26px, 26px 26px, auto;
+	background-attachment: fixed;
+	min-height: 100dvh;
+	display: flex;
+	flex-direction: column;
 	word-wrap: break-word;
 	overflow-wrap: break-word;
 	color: var(--ink);
@@ -63,6 +67,7 @@ body {
 }
 
 main {
+	flex: 1 0 auto;
 	width: min(var(--content-width), calc(100% - 2rem));
 	margin: 0 auto;
 	padding: 1.25rem 0 3rem;

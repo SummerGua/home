@@ -30,7 +30,7 @@ const posts = (await getCollection('blog'))
 						build-tool rabbit hole.
 					</p>
 					<div class="intro-actions">
-						<a class="button-link" href="/blog">Read the blog</a>
+						<a class="button-link" href="/posts">Read the blog</a>
 						<a class="button-link ghost" href="/about">About me</a>
 					</div>
 				</section>
@@ -40,14 +40,18 @@ const posts = (await getCollection('blog'))
 							<p class="eyebrow">Latest</p>
 							<h2 class="section-title">Recent posts</h2>
 						</div>
-						<a class="button-link ghost recent-link" href="/blog">View all posts</a>
+						<a class="button-link ghost recent-link" href="/posts">View all posts</a>
 					</div>
 					<div class="post-list">
 						{
 							posts.map((post) => (
-								<a class="post-card" href={`/blog/${post.id}/`}>
+								<a class="post-card" href={`/posts/${post.id}/`}>
 									<div class="post-meta">
-										<span class="post-category">{post.data.category}</span>
+										<ul class="post-category-list">
+											{post.data.tags.map((tag) => (
+												<li class="post-category">{tag}</li>
+											))}
+										</ul>
 										<p class="post-date">{post.data.pubDate.toLocaleDateString('en-US')}</p>
 									</div>
 									<h3>{post.data.title}</h3>
@@ -142,6 +146,15 @@ const posts = (await getCollection('blog'))
 		align-items: center;
 		gap: 0.5rem 0.75rem;
 		margin-bottom: 0.45rem;
+	}
+
+	.post-category-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
 	}
 
 	.post-category {

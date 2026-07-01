@@ -1,7 +1,7 @@
 ---
 title: 'LocatorJS 原理'
 description: '拆解 LocatorJS 插件：如何通过元素回溯到 Vue / React 组件源码，以及背后的 __vueParentComponent 和 React DevTools Hook。'
-category: 'Frontend'
+tags: 'Frontend'
 pubDate: 'Jul 19 2025'
 ---
 
