@@ -11,13 +11,20 @@ const posts = (await getCollection('blog')).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 
-const categories = Array.from(new Set(posts.flatMap((post) => post.data.tags))).sort((a, b) =>
-	a.localeCompare(b),
-);
-const categoryCounts = categories.map((tag) => ({
-	tag,
-	count: posts.filter((post) => post.data.tags.includes(tag)).length,
-}));
+const tagMap = new Map<string, typeof posts>();
+for (const post of posts) {
+	for (const tag of post.data.tags) {
+		const list = tagMap.get(tag) ?? [];
+		list.push(post);
+		tagMap.set(tag, list);
+	}
+}
+
+const tags = Array.from(tagMap.entries())
+	.map(([tag, tagPosts]) => ({ tag, posts: tagPosts, count: tagPosts.length }))
+	.sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+
+const toSlug = (tag: string) => tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 ---
 
 <!doctype html>
@@ -29,51 +36,61 @@ const categoryCounts = categories.map((tag) => ({
 	<body>
 		<Header />
 		<main>
-			<div class="page-shell">
-				<section class="filters pixel-panel">
-					<div class="filter-row" role="tablist" aria-label="Filter posts by tag">
-						<button class="filter-chip active" type="button" data-filter="all" aria-pressed="true">
-							All ({posts.length})
-						</button>
-						{
-							categoryCounts.map(({ tag, count }) => (
+			<div class="page-shell tags-shell">
+				<section class="tag-index pixel-panel" aria-label="All tags">
+					<div class="tag-index-header">
+						<p class="eyebrow">Index</p>
+						<h2 class="section-title" data-index-title>{tags.length} tags · {posts.length} posts</h2>
+					</div>
+					<ul class="tag-cloud" role="tablist">
+						<li>
+							<button
+								type="button"
+								class="tag-cloud-link tag-all active"
+								data-filter="all"
+								aria-pressed="true"
+							>
+								<span class="tag-cloud-name">All</span>
+								<span class="tag-cloud-count">{posts.length}</span>
+							</button>
+						</li>
+						{tags.map(({ tag, count }) => (
+							<li>
 								<button
-									class="filter-chip"
 									type="button"
+									class="tag-cloud-link"
 									data-filter={tag}
+									data-count={count}
 									aria-pressed="false"
 								>
-									{tag} ({count})
+									<span class="tag-cloud-name">#{tag}</span>
+									<span class="tag-cloud-count">{count}</span>
 								</button>
-							))
-						}
-					</div>
+							</li>
+						))}
+					</ul>
 				</section>
 
-				<section class="post-grid" id="tag-post-grid">
-					{
-						posts.map((post) => (
-							<article class="post-item pixel-panel" data-post-card data-tags={post.data.tags.join('|')}>
-								<a class="post-link" href={`/posts/${post.id}/`}>
-									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
-									</p>
-									<h2 class="title">{post.data.title}</h2>
-									<p class="description">{post.data.description}</p>
-									<div class="card-footer">
-										<ul class="category-list">
-											{post.data.tags.map((tag) => (
-												<li class="category">{tag}</li>
-											))}
-										</ul>
-									</div>
-								</a>
-							</article>
-						))
-					}
-				</section>
-
-				<p id="filter-empty" class="filter-empty pixel-panel" hidden>No posts with this tag yet.</p>
+				{tags.map(({ tag, posts: tagPosts, count }) => (
+					<section class="tag-block" data-tag-block={tag} id={`tag-${toSlug(tag)}`}>
+						<header class="tag-block-header">
+							<h2 class="tag-block-title">#{tag}</h2>
+							<span class="tag-block-count">{count} {count === 1 ? 'post' : 'posts'}</span>
+						</header>
+						<ol class="tag-post-list">
+							{tagPosts.map((post) => (
+								<li>
+									<a class="tag-post-link" href={`/posts/${post.id}/`}>
+										<time class="tag-post-date">
+											<FormattedDate date={post.data.pubDate} />
+										</time>
+										<span class="tag-post-title">{post.data.title}</span>
+									</a>
+								</li>
+							))}
+						</ol>
+					</section>
+				))}
 			</div>
 		</main>
 		<Footer />
@@ -81,174 +98,197 @@ const categoryCounts = categories.map((tag) => ({
 </html>
 
 <style>
-	.filters,
-	.filter-empty,
-	.post-item {
+	.tags-shell {
+		gap: 1.4rem;
+	}
+
+	.tag-index {
 		padding: 1.2rem;
 	}
 
-	.filter-row {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.65rem;
+	.tag-index-header {
+		margin-bottom: 0.9rem;
 	}
 
-	.filter-chip {
-		padding: 0.45rem 0.75rem;
-		border: 1.5px solid var(--line-soft);
-		background: transparent;
-		color: var(--muted);
-		font: inherit;
-		font-size: 0.8rem;
-		font-weight: 700;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		border-radius: 2px;
-		cursor: pointer;
-		transition:
-			background-color 120ms ease,
-			color 120ms ease,
-			border-color 120ms ease;
-	}
-
-	.filter-chip:hover {
-		color: var(--ink);
-		border-color: var(--line);
-		background: color-mix(in srgb, var(--accent-soft) 45%, transparent);
-	}
-
-	.filter-chip.active {
-		color: var(--ink);
-		background: var(--accent-soft);
-		border-color: var(--line);
-	}
-
-	.post-grid {
-		display: grid;
-		gap: 1rem;
-	}
-
-	.post-item {
-		display: flex;
-	}
-
-	.post-item[hidden] {
-		display: none;
-	}
-
-	.post-link {
-		display: flex;
-		flex-direction: column;
-		width: 100%;
-		text-decoration: none;
-	}
-
-	.category-list {
+	.tag-cloud {
 		list-style: none;
 		padding: 0;
 		margin: 0;
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.4rem;
+		gap: 0.5rem 0.6rem;
 	}
 
-	.category {
+	.tag-cloud-link {
 		display: inline-flex;
-		align-items: center;
-		padding: 0.18rem 0.5rem;
-		background: var(--accent-soft);
+		align-items: baseline;
+		gap: 0.4rem;
+		padding: 0.35rem 0.7rem;
+		border: 1.5px solid var(--line-soft);
+		border-radius: 2px;
+		background: var(--panel);
 		color: var(--ink);
+		text-decoration: none;
+		font: inherit;
+		cursor: pointer;
+		transition:
+			transform 120ms ease,
+			border-color 120ms ease,
+			background-color 120ms ease;
+	}
+
+	.tag-cloud-link.active {
+		border-color: var(--line);
+		background: var(--accent-soft);
+	}
+
+	.tag-cloud-link.active .tag-cloud-count {
+		color: var(--ink);
+	}
+
+	.tag-cloud-link:hover {
+		transform: translate(-1px, -1px);
+		border-color: var(--line);
+		background: color-mix(in srgb, var(--accent-soft) 55%, var(--panel));
+	}
+
+	.tag-cloud-name {
+		font-size: 0.9rem;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+	}
+
+	.tag-cloud-count {
 		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		color: var(--muted);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.tag-block[hidden] {
+		display: none;
+	}
+
+	.tag-block {
+		scroll-margin-top: 1rem;
+	}
+
+	.tag-block-header {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin: 0 0 0.55rem;
+		padding-bottom: 0.35rem;
+		border-bottom: 1.5px solid color-mix(in srgb, var(--line) 30%, transparent);
+	}
+
+	.tag-block-title {
+		margin: 0;
+		font-size: 1.1rem;
+		letter-spacing: -0.005em;
+	}
+
+	.tag-block-count {
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--muted);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.tag-post-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: grid;
+		gap: 0.15rem;
+	}
+
+	.tag-post-link {
+		display: grid;
+		grid-template-columns: 6.5rem 1fr;
+		align-items: baseline;
+		gap: 0.8rem;
+		padding: 0.5rem 0.6rem;
+		color: var(--ink);
+		text-decoration: none;
+		border-radius: 2px;
+		transition: background-color 120ms ease, transform 120ms ease;
+	}
+
+	.tag-post-link:hover {
+		background: color-mix(in srgb, var(--accent-soft) 40%, transparent);
+		transform: translateX(2px);
+	}
+
+	.tag-post-date {
+		font-size: 0.74rem;
 		font-weight: 700;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
-		border-radius: 2px;
-	}
-
-	.date {
-		margin: 0 0 0.55rem;
-		font-size: 0.78rem;
-		font-weight: 700;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
 		color: var(--muted);
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
 	}
 
-	.title {
-		margin: 0 0 0.55rem;
-		font-size: 1.25rem;
-		line-height: 1.3;
-	}
-
-	.description {
-		margin: 0 0 1rem;
-		color: var(--muted);
-	}
-
-	.card-footer {
-		margin-top: auto;
-		padding-top: 0.6rem;
-		border-top: 1px solid color-mix(in srgb, var(--line) 12%, transparent);
-		display: flex;
-		align-items: center;
-	}
-
-	.post-item {
-		transition:
-			transform 120ms ease,
-			box-shadow 120ms ease;
-	}
-
-	.post-item:hover {
-		transform: translate(-1px, -1px);
-		box-shadow: 6px 6px 0 var(--shadow);
-	}
-
-	.filter-empty {
-		margin: 0;
+	.tag-post-title {
+		font-size: 0.98rem;
+		line-height: 1.4;
 	}
 
 	@media (min-width: 760px) {
-		.filters,
-		.filter-empty,
-		.post-item {
+		.tag-index {
 			padding: 1.4rem;
 		}
+	}
 
-		.post-grid {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
+	@media (max-width: 520px) {
+		.tag-post-link {
+			grid-template-columns: 1fr;
+			gap: 0.15rem;
 		}
 	}
 </style>
 
 <script>
-	const filterButtons = Array.from(document.querySelectorAll('[data-filter]'));
-	const cards = Array.from(document.querySelectorAll('[data-post-card]'));
-	const emptyState = document.querySelector('#filter-empty');
+	const buttons = Array.from(document.querySelectorAll('[data-filter]'));
+	const blocks = Array.from(document.querySelectorAll('[data-tag-block]'));
+	const indexTitle = document.querySelector('[data-index-title]');
+	const originalTitle = indexTitle?.textContent ?? '';
 
-	const applyFilter = (selectedTag) => {
-		let count = 0;
-
-		for (const button of filterButtons) {
-			const active = button.dataset.filter === selectedTag;
-			button.classList.toggle('active', active);
-			button.setAttribute('aria-pressed', String(active));
+	const applyFilter = (selected) => {
+		for (const btn of buttons) {
+			const active = btn.dataset.filter === selected;
+			btn.classList.toggle('active', active);
+			btn.setAttribute('aria-pressed', String(active));
 		}
 
-		for (const card of cards) {
-			const cardTags = (card.dataset.tags || '').split('|').filter(Boolean);
-			const matched =
-				selectedTag === 'all' || cardTags.includes(selectedTag);
-			card.hidden = !matched;
-			if (matched) count += 1;
+		let visibleCount = 0;
+		let postCount = 0;
+		for (const block of blocks) {
+			const tag = block.dataset.tagBlock;
+			const match = selected === 'all' || tag === selected;
+			block.hidden = !match;
+			if (match) {
+				visibleCount += 1;
+				postCount += block.querySelectorAll('.tag-post-link').length;
+			}
 		}
 
-		if (emptyState) emptyState.hidden = count !== 0;
+		if (indexTitle) {
+			indexTitle.textContent = selected === 'all'
+				? originalTitle
+				: `#${selected} · ${postCount} ${postCount === 1 ? 'post' : 'posts'}`;
+		}
 	};
 
-	for (const button of filterButtons) {
-		button.addEventListener('click', () => {
-			applyFilter(button.dataset.filter || 'all');
+	for (const btn of buttons) {
+		btn.addEventListener('click', () => {
+			applyFilter(btn.dataset.filter || 'all');
+			window.scrollTo({ top: 0, behavior: 'smooth' });
 		});
 	}
 </script>

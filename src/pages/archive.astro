@@ -181,8 +181,22 @@ const totalPosts = posts.length;
 			<div class="page-shell">
 				<section class="heatmap-panel pixel-panel">
 					<div class="heatmap-header">
-						<p class="eyebrow">Activity</p>
-						<h2 class="section-title">{totalPosts} posts</h2>
+						<div class="heatmap-heading">
+							<p class="eyebrow">Activity</p>
+							<h2 class="section-title">{totalPosts} posts</h2>
+						</div>
+						<div class="range-switch" role="tablist" aria-label="Heatmap range">
+							{views.map((v, idx) => (
+								<button
+									type="button"
+									class={`range-chip${idx === 0 ? ' active' : ''}`}
+									data-range={v.id}
+									aria-pressed={idx === 0 ? 'true' : 'false'}
+								>
+									{v.label}
+								</button>
+							))}
+						</div>
 					</div>
 
 					<div class="heatmap-body">
@@ -244,19 +258,6 @@ const totalPosts = posts.length;
 								</div>
 							</div>
 						))}
-
-						<div class="range-switch" role="tablist" aria-label="Heatmap range">
-							{views.map((v, idx) => (
-								<button
-									type="button"
-									class={`range-chip${idx === 0 ? ' active' : ''}`}
-									data-range={v.id}
-									aria-pressed={idx === 0 ? 'true' : 'false'}
-								>
-									{v.label}
-								</button>
-							))}
-						</div>
 					</div>
 
 					<div class="heatmap-tooltip" role="tooltip" hidden data-heatmap-tooltip>
@@ -327,22 +328,28 @@ const totalPosts = posts.length;
 	}
 
 	.heatmap-header {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 0.85rem 1.25rem;
 		margin-bottom: 1rem;
 		min-width: 0;
 	}
 
+	.heatmap-heading {
+		min-width: 0;
+	}
+
 	.heatmap-body {
-		display: flex;
-		align-items: flex-start;
-		gap: 1rem;
+		display: block;
 		min-width: 0;
 	}
 
 	.range-switch {
-		display: flex;
-		flex-direction: column;
-		gap: 0.35rem;
-		padding: 0.3rem;
+		display: inline-flex;
+		gap: 0.25rem;
+		padding: 0.25rem;
 		border: 1px solid var(--line-soft);
 		border-radius: 3px;
 		background: color-mix(in srgb, var(--panel) 60%, transparent);
@@ -350,7 +357,7 @@ const totalPosts = posts.length;
 	}
 
 	.range-chip {
-		padding: 0.4rem 0.7rem;
+		padding: 0.35rem 0.7rem;
 		border: 0;
 		background: transparent;
 		color: var(--muted);
@@ -362,7 +369,6 @@ const totalPosts = posts.length;
 		border-radius: 2px;
 		cursor: pointer;
 		white-space: nowrap;
-		text-align: left;
 		transition: color 120ms ease, background-color 120ms ease;
 	}
 
