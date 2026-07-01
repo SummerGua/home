@@ -12,6 +12,7 @@ import HeaderLink from './HeaderLink.astro';
 		<div class="nav-actions">
 			<div class="internal-links">
 				<HeaderLink href="/blog">Posts</HeaderLink>
+				<HeaderLink href="/categories">Categories</HeaderLink>
 				<HeaderLink href="/archive">Archive</HeaderLink>
 				<HeaderLink href="/about">About</HeaderLink>
 			</div>
@@ -31,9 +32,10 @@ import HeaderLink from './HeaderLink.astro';
 		flex-direction: column;
 		gap: 0.9rem;
 		padding: 0.9rem 1rem;
-		border: 2px solid var(--ink);
+		border: 1.5px solid var(--line);
 		background: var(--panel);
-		box-shadow: 6px 6px 0 var(--shadow);
+		box-shadow: 5px 5px 0 var(--shadow);
+		border-radius: 2px;
 	}
 	.brand {
 		display: inline-flex;
@@ -73,13 +75,14 @@ import HeaderLink from './HeaderLink.astro';
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 2.7rem;
-		height: 2.7rem;
+		width: 2.5rem;
+		height: 2.5rem;
 		padding: 0;
-		border: 2px solid var(--ink);
-		background: var(--panel);
+		border: 1.5px solid var(--line);
+		background: transparent;
 		color: var(--ink);
-		box-shadow: 3px 3px 0 transparent;
+		box-shadow: 2px 2px 0 transparent;
+		border-radius: 2px;
 		cursor: pointer;
 		transition:
 			transform 120ms ease,
@@ -88,7 +91,8 @@ import HeaderLink from './HeaderLink.astro';
 	}
 	.theme-toggle:hover {
 		transform: translate(-1px, -1px);
-		box-shadow: 4px 4px 0 var(--shadow);
+		background: var(--accent-soft);
+		box-shadow: 3px 3px 0 var(--shadow);
 	}
 	.theme-icon {
 		font-size: 1rem;

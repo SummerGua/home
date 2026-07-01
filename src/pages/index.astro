@@ -21,47 +21,26 @@ const posts = (await getCollection('blog'))
 		<Header />
 		<main>
 			<div class="page-shell">
-				<section class="hero pixel-panel">
-					<div class="hero-copy">
-						<p class="eyebrow">SummerGua / Notes</p>
-						<h1>记录前端、JavaScript 和日常学习笔记。</h1>
-						<p class="hero-text">一个用 Markdown 写内容的个人博客，目前收录的是正在整理的技术笔记。</p>
-						<div class="hero-actions">
-							<a class="button-link" href="/blog">进入 Posts</a>
-							<a class="button-link ghost" href="/archive">打开 Archive</a>
-						</div>
-					</div>
-					<div class="status-panel">
-						<p class="eyebrow">Current Focus</p>
-						<ul class="status-list">
-							<li>Markdown 写作</li>
-							<li>JavaScript 笔记整理</li>
-							<li>移动端优先阅读体验</li>
-							<li>极简像素风界面</li>
-						</ul>
+				<section class="intro-section pixel-panel">
+					<p class="eyebrow">Hello</p>
+					<h1 class="intro-title">I&rsquo;m SummerGua.</h1>
+					<p class="intro-body">
+						A frontend engineer who enjoys picking apart tools and writing them back up in plain
+						words. This is where I keep short notes on JavaScript, browsers, and the occasional
+						build-tool rabbit hole.
+					</p>
+					<div class="intro-actions">
+						<a class="button-link" href="/blog">Read the blog</a>
+						<a class="button-link ghost" href="/about">About me</a>
 					</div>
 				</section>
-
-				<section class="intro-grid">
-					<article class="pixel-panel intro-card">
-						<p class="eyebrow">Now Reading</p>
-						<h2 class="section-title">最近在写</h2>
-						<p>目前这站以技术笔记为主，先从 Web Workers 这样的基础主题开始慢慢补全。</p>
-					</article>
-					<article class="pixel-panel intro-card">
-						<p class="eyebrow">Site Style</p>
-						<h2 class="section-title">页面风格</h2>
-						<p>界面保持极简和硬边框节奏，重点还是让文章在手机和桌面上都容易阅读。</p>
-					</article>
-				</section>
-
 				<section class="recent-section pixel-panel">
 					<div class="recent-header">
 						<div>
-							<p class="eyebrow">Latest Post</p>
-							<h2 class="section-title">最近文章</h2>
+							<p class="eyebrow">Latest</p>
+							<h2 class="section-title">Recent posts</h2>
 						</div>
-						<a class="button-link ghost recent-link" href="/blog">查看 Posts</a>
+						<a class="button-link ghost recent-link" href="/blog">View all posts</a>
 					</div>
 					<div class="post-list">
 						{
@@ -85,47 +64,36 @@ const posts = (await getCollection('blog'))
 </html>
 
 <style>
-	.hero,
-	.recent-section,
-	.intro-card {
+	.recent-section {
 		padding: 1.2rem;
 	}
 
-	.hero {
+	.intro-section {
+		padding: 1.4rem 1.2rem;
 		display: grid;
-		gap: 1rem;
+		gap: 0.55rem;
 	}
 
-	.hero-text {
-		max-width: 36rem;
-		font-size: 1rem;
+	.intro-title {
+		margin: 0.15rem 0 0.2rem;
+		font-size: clamp(1.8rem, 4.2vw, 2.6rem);
+		letter-spacing: -0.03em;
+		line-height: 1.1;
+	}
+
+	.intro-body {
+		margin: 0;
+		max-width: 42rem;
 		color: var(--muted);
+		font-size: 1rem;
+		line-height: 1.65;
 	}
 
-	.hero-actions {
-		display: grid;
-		gap: 0.75rem;
-		margin-top: 1.5rem;
-	}
-
-	.status-panel {
-		padding: 1rem;
-		border: 2px dashed var(--line);
-		background: rgba(232, 220, 196, 0.35);
-	}
-
-	.status-list {
-		margin: 0.8rem 0 0;
-		padding-left: 1.1rem;
-	}
-
-	.status-list li + li {
-		margin-top: 0.45rem;
-	}
-
-	.intro-grid {
-		display: grid;
-		gap: 1rem;
+	.intro-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.6rem;
+		margin-top: 0.4rem;
 	}
 
 	.recent-header {
@@ -142,19 +110,21 @@ const posts = (await getCollection('blog'))
 	.post-card {
 		display: block;
 		padding: 1rem;
-		border: 2px solid var(--line);
-		background: rgba(255, 249, 236, 0.65);
+		border: 1px solid var(--line-soft);
+		background: var(--panel-soft);
+		color: var(--ink);
 		text-decoration: none;
+		border-radius: 2px;
 		transition:
 			transform 120ms ease,
-			box-shadow 120ms ease,
+			border-color 120ms ease,
 			background-color 120ms ease;
 	}
 
 	.post-card:hover {
 		transform: translate(-1px, -1px);
-		box-shadow: 4px 4px 0 var(--shadow);
-		background: var(--panel);
+		border-color: var(--line);
+		background: color-mix(in srgb, var(--accent-soft) 40%, var(--panel));
 	}
 
 	.post-date {
@@ -177,13 +147,14 @@ const posts = (await getCollection('blog'))
 	.post-category {
 		display: inline-flex;
 		align-items: center;
-		padding: 0.18rem 0.45rem;
-		border: 1px solid var(--line);
+		padding: 0.18rem 0.5rem;
 		background: var(--accent-soft);
+		color: var(--ink);
 		font-size: 0.72rem;
 		font-weight: 700;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
+		border-radius: 2px;
 	}
 
 	.post-description {
@@ -192,24 +163,12 @@ const posts = (await getCollection('blog'))
 	}
 
 	@media (min-width: 760px) {
-		.hero,
-		.recent-section,
-		.intro-card {
+		.recent-section {
 			padding: 1.5rem;
 		}
 
-		.hero {
-			grid-template-columns: minmax(0, 1.7fr) minmax(16rem, 0.9fr);
-			align-items: end;
-		}
-
-		.hero-actions {
-			display: flex;
-			flex-wrap: wrap;
-		}
-
-		.intro-grid {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
+		.intro-section {
+			padding: 1.9rem 1.6rem;
 		}
 
 		.recent-header {

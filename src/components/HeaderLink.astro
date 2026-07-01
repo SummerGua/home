@@ -18,27 +18,28 @@ const isActive =
 <style>
 	a {
 		display: inline-block;
-		padding: 0.45rem 0.75rem;
-		border: 2px solid var(--ink);
-		background: var(--panel);
-		color: var(--ink);
+		padding: 0.4rem 0.7rem;
+		border: 1.5px solid transparent;
+		background: transparent;
+		color: var(--muted);
 		text-decoration: none;
 		font-size: 0.84rem;
 		font-weight: 700;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
-		box-shadow: 3px 3px 0 transparent;
+		border-radius: 2px;
 		transition:
-			transform 120ms ease,
-			box-shadow 120ms ease,
-			background-color 120ms ease;
-	}
-	a.active {
-		background: var(--accent-soft);
-		box-shadow: 3px 3px 0 var(--shadow);
+			color 120ms ease,
+			background-color 120ms ease,
+			border-color 120ms ease;
 	}
 	a:hover {
-		transform: translate(-1px, -1px);
-		box-shadow: 4px 4px 0 var(--shadow);
+		color: var(--ink);
+		background: color-mix(in srgb, var(--accent-soft) 40%, transparent);
+	}
+	a.active {
+		color: var(--ink);
+		background: var(--accent-soft);
+		border-color: var(--line);
 	}
 </style>

@@ -17,6 +17,156 @@ const groupedPosts = posts.reduce<Record<string, typeof posts>>((groups, post) =
 	groups[year].push(post);
 	return groups;
 }, {});
+
+// Build heatmap covering the last ~53 weeks up to today.
+const toDayKey = (date: Date) =>
+	`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+const postsByDay = new Map<string, { title: string; id: string }[]>();
+for (const post of posts) {
+	const key = toDayKey(post.data.pubDate);
+	const list = postsByDay.get(key) ?? [];
+	list.push({ title: post.data.title, id: post.id });
+	postsByDay.set(key, list);
+}
+
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+const end = new Date(today);
+// Align end column to the current week's Saturday (0=Sun..6=Sat)
+end.setDate(end.getDate() + (6 - end.getDay()));
+
+const earliestPost = posts.reduce<Date>((acc, post) => {
+	const d = new Date(post.data.pubDate);
+	d.setHours(0, 0, 0, 0);
+	return d < acc ? d : acc;
+}, today);
+
+type Cell = {
+	key: string;
+	label: string;
+	count: number;
+	inFuture: boolean;
+	titles: string[];
+};
+
+type MonthGroup = {
+	key: string;
+	year: number;
+	month: number;
+	label: string;
+	weeks: Cell[][];
+	hasPost: boolean;
+};
+
+type Segment =
+	| { type: 'months'; groups: MonthGroup[] }
+	| { type: 'gap'; count: number; fromLabel: string; toLabel: string };
+
+const currentMonthKey = `${today.getFullYear()}-${today.getMonth()}`;
+
+function buildSegments(rangeStart: Date): { segments: Segment[]; postCount: number } {
+	const start = new Date(rangeStart);
+	start.setDate(start.getDate() - start.getDay());
+	const totalDays = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+	const weekCount = Math.max(1, Math.ceil(totalDays / 7));
+
+	const weeks: Cell[][] = [];
+	const cursor = new Date(start);
+	let postCount = 0;
+	for (let w = 0; w < weekCount; w += 1) {
+		const week: Cell[] = [];
+		for (let d = 0; d < 7; d += 1) {
+			const key = toDayKey(cursor);
+			const entries = postsByDay.get(key) ?? [];
+			postCount += entries.length;
+			week.push({
+				key,
+				label: cursor.toLocaleDateString('en-US', {
+					year: 'numeric',
+					month: 'short',
+					day: 'numeric',
+				}),
+				count: entries.length,
+				inFuture: cursor > today,
+				titles: entries.map((entry) => entry.title),
+			});
+			cursor.setDate(cursor.getDate() + 1);
+		}
+		weeks.push(week);
+	}
+
+	const monthGroups: MonthGroup[] = [];
+	for (const wk of weeks) {
+		const anchor = new Date(wk[3].key);
+		const key = `${anchor.getFullYear()}-${anchor.getMonth()}`;
+		let group = monthGroups[monthGroups.length - 1];
+		if (!group || group.key !== key) {
+			group = {
+				key,
+				year: anchor.getFullYear(),
+				month: anchor.getMonth(),
+				label: anchor.toLocaleDateString('en-US', { month: 'short' }),
+				weeks: [],
+				hasPost: false,
+			};
+			monthGroups.push(group);
+		}
+		group.weeks.push(wk);
+		if (wk.some((c) => c.count > 0)) group.hasPost = true;
+	}
+
+	for (const g of monthGroups) {
+		if (g.key === currentMonthKey) g.hasPost = true;
+	}
+
+	const segments: Segment[] = [];
+	let i = 0;
+	while (i < monthGroups.length) {
+		if (monthGroups[i].hasPost) {
+			const run: MonthGroup[] = [];
+			while (i < monthGroups.length && monthGroups[i].hasPost) {
+				run.push(monthGroups[i]);
+				i += 1;
+			}
+			segments.push({ type: 'months', groups: run });
+		} else {
+			const run: MonthGroup[] = [];
+			while (i < monthGroups.length && !monthGroups[i].hasPost) {
+				run.push(monthGroups[i]);
+				i += 1;
+			}
+			if (run.length >= 2) {
+				const from = run[0];
+				const to = run[run.length - 1];
+				segments.push({
+					type: 'gap',
+					count: run.length,
+					fromLabel: `${from.label} ${from.year}`,
+					toLabel: `${to.label} ${to.year}`,
+				});
+			} else {
+				segments.push({ type: 'months', groups: run });
+			}
+		}
+	}
+
+	return { segments, postCount };
+}
+
+const sixMonthsAgo = new Date(today);
+sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+const twelveMonthsAgo = new Date(today);
+twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+
+const views = [
+	{ id: 'all', label: 'Since first', start: (() => { const d = new Date(earliestPost); d.setDate(d.getDate() - 7); return d; })() },
+	{ id: '12m', label: 'Last 12 months', start: twelveMonthsAgo },
+	{ id: '6m', label: 'Last 6 months', start: sixMonthsAgo },
+].map((v) => ({ ...v, ...buildSegments(v.start) }));
+
+const maxCount = Math.max(1, ...Array.from(postsByDay.values(), (list) => list.length));
+const totalPosts = posts.length;
 ---
 
 <!doctype html>
@@ -29,31 +179,138 @@ const groupedPosts = posts.reduce<Record<string, typeof posts>>((groups, post) =
 		<Header />
 		<main>
 			<div class="page-shell">
+				<section class="heatmap-panel pixel-panel">
+					<div class="heatmap-header">
+						<p class="eyebrow">Activity</p>
+						<h2 class="section-title">{totalPosts} posts</h2>
+					</div>
+
+					<div class="heatmap-body">
+						{views.map((view, viewIdx) => (
+							<div
+								class="heatmap-scroll"
+								data-heatmap-view={view.id}
+								hidden={viewIdx !== 0}
+							>
+								<div class="heatmap-row" role="grid" aria-label={`Post activity by day (${view.label})`}>
+									<div class="heatmap-days" aria-hidden="true">
+										<span>Mon</span>
+										<span>Wed</span>
+										<span>Fri</span>
+									</div>
+									<div class="heatmap-segments">
+										{view.segments.map((seg) => seg.type === 'gap' ? (
+											<div class="heatmap-gap" role="presentation" aria-label={`${seg.count} empty months between ${seg.fromLabel} and ${seg.toLabel}`}>
+												<span class="gap-dots" aria-hidden="true">
+													<span></span><span></span><span></span>
+												</span>
+												<span class="gap-label">
+													{seg.count} quiet months
+													<span class="gap-range">{seg.fromLabel} → {seg.toLabel}</span>
+												</span>
+											</div>
+										) : (
+											<div class="heatmap-cluster">
+												<div class="heatmap-cluster-months" aria-hidden="true">
+													{seg.groups.map((g) => (
+														<span class="heatmap-month" style={`--cols: ${g.weeks.length};`}>
+															{g.label}
+														</span>
+													))}
+												</div>
+												<div class="heatmap-cluster-cells">
+													{seg.groups.flatMap((g) => g.weeks).map((week) => (
+														<div class="heatmap-week">
+															{week.map((cell) => {
+																const level = cell.inFuture
+																	? -1
+																	: cell.count === 0
+																		? 0
+																		: Math.min(4, Math.ceil((cell.count / maxCount) * 4));
+																return (
+																	<button
+																		type="button"
+																		class="heatmap-cell"
+																		data-level={level}
+																		data-date={cell.key}
+																		data-count={cell.count}
+																		data-label={cell.label}
+																		data-titles={cell.titles.join('||')}
+																		disabled={cell.inFuture || cell.count === 0}
+																		aria-label={`${cell.label}: ${cell.count} posts`}
+																	/>
+																);
+															})}
+														</div>
+													))}
+												</div>
+											</div>
+										))}
+									</div>
+								</div>
+							</div>
+						))}
+
+						<div class="range-switch" role="tablist" aria-label="Heatmap range">
+							{views.map((v, idx) => (
+								<button
+									type="button"
+									class={`range-chip${idx === 0 ? ' active' : ''}`}
+									data-range={v.id}
+									aria-pressed={idx === 0 ? 'true' : 'false'}
+								>
+									{v.label}
+								</button>
+							))}
+						</div>
+					</div>
+
+					<div class="heatmap-tooltip" role="tooltip" hidden data-heatmap-tooltip>
+						<p class="tooltip-title" data-tooltip-title></p>
+						<p class="tooltip-count" data-tooltip-count></p>
+						<ul class="tooltip-list" data-tooltip-list></ul>
+					</div>
+
+					<div class="heatmap-tooltip pinned" role="dialog" hidden data-heatmap-pinned>
+						<p class="tooltip-title" data-pinned-title></p>
+						<p class="tooltip-count" data-pinned-count></p>
+						<ul class="tooltip-list" data-pinned-list></ul>
+						<button type="button" class="pinned-clear" data-heatmap-clear>
+							Clear filter
+						</button>
+					</div>
+				</section>
+
 				{
 					Object.entries(groupedPosts)
 						.sort((a, b) => Number(b[0]) - Number(a[0]))
 						.map(([year, yearPosts]) => (
-						<section class="archive-group pixel-panel">
-							<div class="archive-heading">
-								<p class="eyebrow">Year</p>
-								<h2 class="section-title">{year}</h2>
-							</div>
-							<div class="archive-list">
-								{yearPosts.map((post) => (
-									<a class="archive-item" href={`/blog/${post.id}/`}>
-										<div class="archive-meta">
-											<span class="archive-category">{post.data.category}</span>
-											<p class="archive-date">
-												<FormattedDate date={post.data.pubDate} />
-											</p>
-										</div>
-										<h3>{post.data.title}</h3>
-										<p>{post.data.description}</p>
-									</a>
-								))}
-							</div>
-						</section>
-					))
+							<section class="archive-group pixel-panel" data-archive-group data-year={year}>
+								<div class="archive-heading">
+									<p class="eyebrow">Year</p>
+									<h2 class="section-title">{year}</h2>
+								</div>
+								<div class="archive-list">
+									{yearPosts.map((post) => (
+										<a
+											class="archive-item"
+											href={`/blog/${post.id}/`}
+											data-archive-item
+											data-date={toDayKey(post.data.pubDate)}
+										>
+											<div class="archive-meta">
+												<span class="archive-category">{post.data.category}</span>
+												<p class="archive-date">
+													<FormattedDate date={post.data.pubDate} />
+												</p>
+											</div>
+											<h3>{post.data.title}</h3>
+											<p>{post.data.description}</p>
+										</a>
+									))}
+								</div>
+							</section>
+						))
 				}
 			</div>
 		</main>
@@ -62,6 +319,338 @@ const groupedPosts = posts.reduce<Record<string, typeof posts>>((groups, post) =
 </html>
 
 <style>
+	.heatmap-panel {
+		padding: 1.2rem;
+		position: relative;
+		min-width: 0;
+		max-width: 100%;
+		overflow: hidden;
+		box-sizing: border-box;
+	}
+
+	.heatmap-header {
+		margin-bottom: 1rem;
+		min-width: 0;
+	}
+
+	.heatmap-body {
+		display: flex;
+		align-items: flex-start;
+		gap: 1rem;
+		min-width: 0;
+	}
+
+	.range-switch {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+		padding: 0.3rem;
+		border: 1px solid var(--line-soft);
+		border-radius: 3px;
+		background: color-mix(in srgb, var(--panel) 60%, transparent);
+		flex-shrink: 0;
+	}
+
+	.range-chip {
+		padding: 0.4rem 0.7rem;
+		border: 0;
+		background: transparent;
+		color: var(--muted);
+		font: inherit;
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		border-radius: 2px;
+		cursor: pointer;
+		white-space: nowrap;
+		text-align: left;
+		transition: color 120ms ease, background-color 120ms ease;
+	}
+
+	.range-chip:hover {
+		color: var(--ink);
+	}
+
+	.range-chip.active {
+		color: var(--ink);
+		background: var(--accent-soft);
+	}
+
+	.heatmap-scroll {
+		flex: 1 1 auto;
+		min-width: 0;
+		max-width: 100%;
+		overflow-x: auto;
+		overflow-y: hidden;
+		padding-bottom: 0.35rem;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.heatmap-scroll[hidden] {
+		display: none;
+	}
+
+	.heatmap-row {
+		display: flex;
+		align-items: flex-end;
+		gap: 0.5rem;
+		width: max-content;
+	}
+
+	.heatmap-days {
+		display: grid;
+		grid-template-rows: repeat(7, 0.7rem);
+		gap: 3px;
+		align-content: end;
+		padding-bottom: 0.15rem;
+		font-size: 0.66rem;
+		font-weight: 700;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+
+	.heatmap-days span:nth-child(1) { grid-row: 2; }
+	.heatmap-days span:nth-child(2) { grid-row: 4; }
+	.heatmap-days span:nth-child(3) { grid-row: 6; }
+
+	.heatmap-segments {
+		display: flex;
+		align-items: flex-end;
+		gap: 0.75rem;
+	}
+
+	.heatmap-cluster {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+
+	.heatmap-cluster-months {
+		display: flex;
+		gap: 3px;
+		font-size: 0.7rem;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--muted);
+		overflow: visible;
+	}
+
+	.heatmap-cluster-months .heatmap-month {
+		min-width: calc(var(--cols) * 0.7rem + (var(--cols) - 1) * 3px);
+		flex-shrink: 0;
+		white-space: nowrap;
+		overflow: visible;
+	}
+
+	.heatmap-cluster-months .heatmap-month:last-child {
+		min-width: 0;
+	}
+
+	.heatmap-cluster-cells {
+		display: grid;
+		grid-auto-flow: column;
+		grid-template-rows: repeat(7, 0.7rem);
+		grid-auto-columns: 0.7rem;
+		gap: 3px;
+	}
+
+	.heatmap-week {
+		display: contents;
+	}
+
+	.heatmap-gap {
+		display: inline-flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.3rem;
+		padding: 0 0.6rem;
+		min-height: calc(7 * 0.7rem + 6 * 3px);
+		border-left: 1px dashed var(--line-soft);
+		border-right: 1px dashed var(--line-soft);
+	}
+
+	.gap-dots {
+		display: inline-flex;
+		gap: 4px;
+	}
+
+	.gap-dots span {
+		width: 4px;
+		height: 4px;
+		border-radius: 50%;
+		background: var(--line-soft);
+		animation: gap-pulse 1.8s ease-in-out infinite;
+	}
+
+	.gap-dots span:nth-child(2) { animation-delay: 0.2s; }
+	.gap-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+	@keyframes gap-pulse {
+		0%, 100% { opacity: 0.45; transform: translateY(0); }
+		50% { opacity: 1; transform: translateY(-1px); }
+	}
+
+	.gap-label {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.15rem;
+		font-size: 0.7rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--muted);
+		white-space: nowrap;
+	}
+
+	.gap-range {
+		font-size: 0.62rem;
+		font-weight: 600;
+		letter-spacing: 0.05em;
+		text-transform: none;
+		color: color-mix(in srgb, var(--muted) 75%, transparent);
+	}
+
+	.heatmap-cell {
+		width: 0.7rem;
+		height: 0.7rem;
+		padding: 0;
+		border: 0;
+		border-radius: 2px;
+		background: color-mix(in srgb, var(--muted) 12%, transparent);
+		cursor: pointer;
+		transition:
+			transform 120ms ease,
+			outline-color 120ms ease,
+			background-color 120ms ease;
+		outline: 1.5px solid transparent;
+		outline-offset: 1px;
+	}
+
+	.heatmap-cell[data-level='-1'] {
+		background: transparent;
+		cursor: default;
+		pointer-events: none;
+	}
+
+	.heatmap-cell[data-level='1'] {
+		background: color-mix(in srgb, var(--accent-soft) 65%, var(--panel));
+	}
+	.heatmap-cell[data-level='2'] {
+		background: color-mix(in srgb, var(--accent-soft) 90%, var(--accent) 10%);
+	}
+	.heatmap-cell[data-level='3'] {
+		background: color-mix(in srgb, var(--accent) 55%, var(--accent-soft) 45%);
+	}
+	.heatmap-cell[data-level='4'] {
+		background: var(--accent);
+	}
+
+	.heatmap-cell:not(:disabled):hover,
+	.heatmap-cell:not(:disabled):focus-visible {
+		outline-color: var(--ink);
+		transform: scale(1.15);
+	}
+
+	.heatmap-cell.selected {
+		outline-color: var(--ink);
+		outline-width: 2px;
+	}
+
+	.heatmap-tooltip {
+		position: absolute;
+		z-index: 5;
+		max-width: 18rem;
+		padding: 0.55rem 0.7rem;
+		border: 1px solid var(--line);
+		background: var(--panel);
+		color: var(--ink);
+		box-shadow: 4px 4px 0 var(--shadow);
+		border-radius: 2px;
+		pointer-events: none;
+		transform: translate(-50%, calc(-100% - 0.5rem));
+	}
+
+	.heatmap-tooltip.pinned {
+		pointer-events: auto;
+		z-index: 6;
+	}
+
+	.heatmap-tooltip.pinned::after {
+		content: '';
+		position: absolute;
+		left: 50%;
+		bottom: -6px;
+		width: 10px;
+		height: 10px;
+		background: var(--panel);
+		border-right: 1px solid var(--line);
+		border-bottom: 1px solid var(--line);
+		transform: translateX(-50%) rotate(45deg);
+	}
+
+	.pinned-clear {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		margin-top: 0.5rem;
+		padding: 0.3rem 0.55rem;
+		border: 1px solid var(--line-soft);
+		background: transparent;
+		color: var(--muted);
+		font: inherit;
+		font-size: 0.7rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		border-radius: 2px;
+		cursor: pointer;
+		transition: color 120ms ease, border-color 120ms ease;
+	}
+
+	.pinned-clear::before {
+		content: '×';
+		font-size: 0.95rem;
+		line-height: 1;
+	}
+
+	.pinned-clear:hover {
+		color: var(--ink);
+		border-color: var(--line);
+	}
+
+	.tooltip-title {
+		margin: 0;
+		font-size: 0.78rem;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+
+	.tooltip-count {
+		margin: 0.15rem 0 0.35rem;
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: var(--ink);
+	}
+
+	.tooltip-list {
+		margin: 0;
+		padding-left: 1rem;
+		font-size: 0.82rem;
+		line-height: 1.4;
+		color: var(--ink);
+	}
+
+	.tooltip-list:empty {
+		display: none;
+	}
+
 	.archive-group {
 		padding: 1.2rem;
 	}
@@ -77,18 +666,27 @@ const groupedPosts = posts.reduce<Record<string, typeof posts>>((groups, post) =
 
 	.archive-item {
 		display: block;
-		padding: 1rem;
-		border: 2px solid var(--line);
-		background: color-mix(in srgb, var(--panel) 76%, transparent);
+		padding: 0.9rem 1rem;
+		border: 1px solid var(--line-soft);
+		background: var(--panel-soft);
+		color: var(--ink);
 		text-decoration: none;
+		border-radius: 2px;
 		transition:
 			transform 120ms ease,
-			box-shadow 120ms ease;
+			border-color 120ms ease,
+			background-color 120ms ease;
+	}
+
+	.archive-item[hidden],
+	.archive-group[hidden] {
+		display: none;
 	}
 
 	.archive-item:hover {
 		transform: translate(-1px, -1px);
-		box-shadow: 4px 4px 0 var(--shadow);
+		border-color: var(--line);
+		background: color-mix(in srgb, var(--accent-soft) 40%, var(--panel));
 	}
 
 	.archive-item p,
@@ -111,13 +709,14 @@ const groupedPosts = posts.reduce<Record<string, typeof posts>>((groups, post) =
 	.archive-category {
 		display: inline-flex;
 		align-items: center;
-		padding: 0.18rem 0.45rem;
-		border: 1px solid var(--line);
+		padding: 0.18rem 0.5rem;
 		background: var(--accent-soft);
+		color: var(--ink);
 		font-size: 0.72rem;
 		font-weight: 700;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
+		border-radius: 2px;
 	}
 
 	.archive-date {
@@ -129,8 +728,177 @@ const groupedPosts = posts.reduce<Record<string, typeof posts>>((groups, post) =
 	}
 
 	@media (min-width: 760px) {
-		.archive-group {
+		.archive-group,
+		.heatmap-panel {
 			padding: 1.4rem;
 		}
 	}
 </style>
+
+<script>
+	const panel = document.querySelector('.heatmap-panel');
+	const views = Array.from(document.querySelectorAll('[data-heatmap-view]'));
+	const rangeChips = Array.from(document.querySelectorAll('[data-range]'));
+	const tooltip = document.querySelector('[data-heatmap-tooltip]');
+	const tooltipTitle = document.querySelector('[data-tooltip-title]');
+	const tooltipCount = document.querySelector('[data-tooltip-count]');
+	const tooltipList = document.querySelector('[data-tooltip-list]');
+	const pinned = document.querySelector('[data-heatmap-pinned]');
+	const pinnedTitle = document.querySelector('[data-pinned-title]');
+	const pinnedCount = document.querySelector('[data-pinned-count]');
+	const pinnedList = document.querySelector('[data-pinned-list]');
+	const pinnedClear = document.querySelector('[data-heatmap-clear]');
+	const archiveItems = Array.from(document.querySelectorAll('[data-archive-item]'));
+	const archiveGroups = Array.from(document.querySelectorAll('[data-archive-group]'));
+
+	let activeView = views[0] || null;
+	let scroll = activeView;
+	let cells = activeView ? Array.from(activeView.querySelectorAll('.heatmap-cell')) : [];
+	let selectedDate = null;
+
+	const fillTooltip = (cell, titleEl, countEl, listEl) => {
+		const label = cell.dataset.label || '';
+		const count = Number(cell.dataset.count || 0);
+		const titles = (cell.dataset.titles || '').split('||').filter(Boolean);
+
+		if (titleEl) titleEl.textContent = label;
+		if (countEl)
+			countEl.textContent = count === 0
+				? 'No posts'
+				: count === 1
+					? '1 post'
+					: `${count} posts`;
+
+		if (listEl) {
+			listEl.innerHTML = '';
+			for (const title of titles.slice(0, 4)) {
+				const li = document.createElement('li');
+				li.textContent = title;
+				listEl.appendChild(li);
+			}
+			if (titles.length > 4) {
+				const li = document.createElement('li');
+				li.textContent = `+${titles.length - 4} more`;
+				listEl.appendChild(li);
+			}
+		}
+	};
+
+	const positionAt = (node, cell) => {
+		if (!node || !panel) return;
+		const cellRect = cell.getBoundingClientRect();
+		const panelRect = panel.getBoundingClientRect();
+		node.style.left = `${cellRect.left - panelRect.left + cellRect.width / 2}px`;
+		node.style.top = `${cellRect.top - panelRect.top}px`;
+	};
+
+	const showTooltip = (cell) => {
+		if (!tooltip) return;
+		if (selectedDate && cell.dataset.date === selectedDate) return;
+		fillTooltip(cell, tooltipTitle, tooltipCount, tooltipList);
+		tooltip.hidden = false;
+		positionAt(tooltip, cell);
+	};
+
+	const hideTooltip = () => {
+		if (tooltip) tooltip.hidden = true;
+	};
+
+	const showPinned = (cell) => {
+		if (!pinned) return;
+		fillTooltip(cell, pinnedTitle, pinnedCount, pinnedList);
+		pinned.hidden = false;
+		positionAt(pinned, cell);
+	};
+
+	const hidePinned = () => {
+		if (pinned) pinned.hidden = true;
+	};
+
+	const applyFilter = (date) => {
+		selectedDate = date;
+		for (const cell of cells) {
+			cell.classList.toggle('selected', Boolean(date) && cell.dataset.date === date);
+		}
+
+		for (const item of archiveItems) {
+			const matches = !date || item.dataset.date === date;
+			item.hidden = !matches;
+		}
+
+		for (const group of archiveGroups) {
+			const anyVisible = Array.from(group.querySelectorAll('[data-archive-item]')).some(
+				(node) => !node.hidden,
+			);
+			group.hidden = !anyVisible;
+		}
+
+		if (date) {
+			const cell = cells.find((c) => c.dataset.date === date);
+			if (cell) {
+				hideTooltip();
+				showPinned(cell);
+			}
+		} else {
+			hidePinned();
+		}
+	};
+
+	const bindCells = () => {
+		for (const cell of cells) {
+			cell.addEventListener('mouseenter', () => showTooltip(cell));
+			cell.addEventListener('focus', () => showTooltip(cell));
+			cell.addEventListener('mouseleave', hideTooltip);
+			cell.addEventListener('blur', hideTooltip);
+			cell.addEventListener('click', () => {
+				if (cell.classList.contains('selected')) {
+					applyFilter(null);
+				} else if (Number(cell.dataset.count || 0) > 0) {
+					applyFilter(cell.dataset.date || null);
+				}
+			});
+		}
+	};
+
+	bindCells();
+
+	const switchView = (id) => {
+		const target = views.find((v) => v.dataset.heatmapView === id);
+		if (!target || target === activeView) return;
+
+		applyFilter(null);
+		hideTooltip();
+
+		for (const v of views) v.hidden = v !== target;
+		for (const chip of rangeChips) {
+			const active = chip.dataset.range === id;
+			chip.classList.toggle('active', active);
+			chip.setAttribute('aria-pressed', String(active));
+		}
+
+		activeView = target;
+		scroll = target;
+		cells = Array.from(target.querySelectorAll('.heatmap-cell'));
+		bindCells();
+	};
+
+	for (const chip of rangeChips) {
+		chip.addEventListener('click', () => switchView(chip.dataset.range));
+	}
+
+	if (pinnedClear) {
+		pinnedClear.addEventListener('click', () => applyFilter(null));
+	}
+
+	const reposition = () => {
+		if (!selectedDate) return;
+		const cell = cells.find((c) => c.dataset.date === selectedDate);
+		if (cell) positionAt(pinned, cell);
+	};
+
+	for (const v of views) {
+		v.addEventListener('scroll', reposition);
+	}
+
+	window.addEventListener('resize', reposition);
+</script>
