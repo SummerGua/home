@@ -1,0 +1,63 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import ThemeScript from '../components/ThemeScript.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+---
+
+<!doctype html>
+<html lang="en">
+        <head>
+                <BaseHead title={`404 | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+                <ThemeScript />
+        </head>
+        <body>
+                <main class="not-found-page">
+                        <section class="not-found" aria-labelledby="not-found-title">
+                                <div class="not-found-copy">
+                                        <h1 id="not-found-title">404</h1>
+                                        <div class="not-found-actions">
+                                                <a class="button-link" href="/">Back home</a>
+                                                <a class="button-link ghost" href="/posts">Browse posts</a>
+                                        </div>
+                                </div>
+                        </section>
+                </main>
+        </body>
+</html>
+
+<style>
+        .not-found-page {
+                display: grid;
+                place-items: center;
+                min-height: 100dvh;
+                padding: 1.5rem;
+        }
+
+        .not-found {
+                display: grid;
+                place-items: center;
+                text-align: center;
+        }
+
+        .not-found-copy {
+                display: grid;
+                gap: 1rem;
+                justify-items: center;
+        }
+
+        .not-found h1 {
+                margin: 0;
+                font-size: clamp(5rem, 22vw, 11rem);
+                line-height: 0.82;
+                letter-spacing: -0.08em;
+                text-shadow: 5px 5px 0 var(--shadow);
+        }
+
+        .not-found-actions {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.65rem;
+                margin-top: 0.35rem;
+        }
+</style>
