@@ -42,6 +42,15 @@ const toSlug = (tag: string) => tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').re
 						<p class="eyebrow">Index</p>
 						<h2 class="section-title" data-index-title>{tags.length} tags · {posts.length} posts</h2>
 					</div>
+					<label class="tag-select-wrap" for="tag-filter">
+						<span class="sr-only">Filter posts by tag</span>
+						<select id="tag-filter" class="tag-select" data-filter-select>
+							<option value="all">All tags · {posts.length} posts</option>
+							{tags.map(({ tag, count }) => (
+								<option value={tag}>#{tag} · {count} {count === 1 ? 'post' : 'posts'}</option>
+							))}
+						</select>
+					</label>
 					<ul class="tag-cloud" role="tablist">
 						<li>
 							<button
@@ -108,6 +117,28 @@ const toSlug = (tag: string) => tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').re
 
 	.tag-index-header {
 		margin-bottom: 0.9rem;
+	}
+
+	.tag-select-wrap {
+		display: block;
+		margin-bottom: 0.9rem;
+	}
+
+	.tag-select {
+		width: 100%;
+		padding: 0.78rem 2.3rem 0.78rem 0.85rem;
+		border: 1.5px solid var(--line);
+		border-radius: 2px;
+		background:
+			linear-gradient(45deg, transparent 50%, var(--ink) 50%) calc(100% - 1.05rem) 52% / 0.42rem 0.42rem no-repeat,
+			linear-gradient(135deg, var(--ink) 50%, transparent 50%) calc(100% - 0.78rem) 52% / 0.42rem 0.42rem no-repeat,
+			var(--panel);
+		color: var(--ink);
+		font: inherit;
+		font-size: 0.92rem;
+		font-weight: 700;
+		box-shadow: 3px 3px 0 var(--shadow);
+		appearance: none;
 	}
 
 	.tag-cloud {
@@ -243,9 +274,29 @@ const toSlug = (tag: string) => tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').re
 		.tag-index {
 			padding: 1.4rem;
 		}
+
+		.tag-select-wrap {
+			display: none;
+		}
+	}
+
+	@media (max-width: 759px) {
+		.tag-cloud {
+			display: none;
+		}
 	}
 
 	@media (max-width: 520px) {
+		.tag-index {
+			padding: 1rem;
+		}
+
+		.tag-block-header {
+			align-items: flex-start;
+			flex-direction: column;
+			gap: 0.2rem;
+		}
+
 		.tag-post-link {
 			grid-template-columns: 1fr;
 			gap: 0.15rem;
@@ -257,6 +308,7 @@ const toSlug = (tag: string) => tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').re
 	const buttons = Array.from(document.querySelectorAll('[data-filter]'));
 	const blocks = Array.from(document.querySelectorAll('[data-tag-block]'));
 	const indexTitle = document.querySelector('[data-index-title]');
+	const filterSelect = document.querySelector('[data-filter-select]');
 	const originalTitle = indexTitle?.textContent ?? '';
 
 	const applyFilter = (selected) => {
@@ -264,6 +316,10 @@ const toSlug = (tag: string) => tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').re
 			const active = btn.dataset.filter === selected;
 			btn.classList.toggle('active', active);
 			btn.setAttribute('aria-pressed', String(active));
+		}
+
+		if (filterSelect) {
+			filterSelect.value = selected;
 		}
 
 		let visibleCount = 0;
@@ -291,4 +347,8 @@ const toSlug = (tag: string) => tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').re
 			window.scrollTo({ top: 0, behavior: 'smooth' });
 		});
 	}
+
+	filterSelect?.addEventListener('change', () => {
+		applyFilter(filterSelect.value || 'all');
+	});
 </script>

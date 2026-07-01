@@ -185,6 +185,14 @@ const totalPosts = posts.length;
 							<p class="eyebrow">Activity</p>
 							<h2 class="section-title">{totalPosts} posts</h2>
 						</div>
+						<label class="range-select-wrap" for="heatmap-range">
+							<span class="sr-only">Change heatmap range</span>
+							<select id="heatmap-range" class="range-select" data-range-select>
+								{views.map((v, idx) => (
+									<option value={v.id} selected={idx === 0}>{v.label}</option>
+								))}
+							</select>
+						</label>
 						<div class="range-switch" role="tablist" aria-label="Heatmap range">
 							{views.map((v, idx) => (
 								<button
@@ -294,14 +302,14 @@ const totalPosts = posts.length;
 											data-date={toDayKey(post.data.pubDate)}
 										>
 											<div class="archive-meta">
-												<ul class="archive-category-list">
-													{post.data.tags.map((tag) => (
-														<li class="archive-category">{tag}</li>
-													))}
-												</ul>
 												<p class="archive-date">
 													<FormattedDate date={post.data.pubDate} />
 												</p>
+												<ul class="archive-category-list">
+													{post.data.tags.map((tag) => (
+														<li class="archive-category">#{tag}</li>
+													))}
+												</ul>
 											</div>
 											<h3>{post.data.title}</h3>
 											<p>{post.data.description}</p>
@@ -339,6 +347,28 @@ const totalPosts = posts.length;
 
 	.heatmap-heading {
 		min-width: 0;
+	}
+
+	.range-select-wrap {
+		display: block;
+		width: 100%;
+	}
+
+	.range-select {
+		width: 100%;
+		padding: 0.72rem 2.25rem 0.72rem 0.85rem;
+		border: 1.5px solid var(--line);
+		border-radius: 2px;
+		background:
+			linear-gradient(45deg, transparent 50%, var(--ink) 50%) calc(100% - 1.05rem) 52% / 0.42rem 0.42rem no-repeat,
+			linear-gradient(135deg, var(--ink) 50%, transparent 50%) calc(100% - 0.78rem) 52% / 0.42rem 0.42rem no-repeat,
+			var(--panel);
+		color: var(--ink);
+		font: inherit;
+		font-size: 0.88rem;
+		font-weight: 700;
+		box-shadow: 3px 3px 0 var(--shadow);
+		appearance: none;
 	}
 
 	.heatmap-body {
@@ -677,6 +707,10 @@ const totalPosts = posts.length;
 	}
 
 	@media (min-width: 760px) {
+		.range-select-wrap {
+			display: none;
+		}
+
 		.archive-group {
 			grid-template-columns: 6.5rem 1fr;
 			gap: 1.25rem;
@@ -725,15 +759,17 @@ const totalPosts = posts.length;
 	}
 
 	.archive-item h3 {
-		margin-top: 0.3rem;
+		margin-top: 0.55rem;
 		margin-bottom: 0.45rem;
 	}
 
 	.archive-meta {
 		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 0.5rem 0.75rem;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.55rem 1rem;
+		padding-bottom: 0.55rem;
+		border-bottom: 1px solid color-mix(in srgb, var(--line) 12%, transparent);
 	}
 
 	.archive-category-list {
@@ -742,23 +778,28 @@ const totalPosts = posts.length;
 		margin: 0;
 		display: flex;
 		flex-wrap: wrap;
+		justify-content: flex-end;
 		gap: 0.4rem;
 	}
 
 	.archive-category {
 		display: inline-flex;
 		align-items: center;
-		padding: 0.18rem 0.5rem;
-		background: var(--accent-soft);
+		padding: 0.16rem 0.48rem;
+		border: 1px solid color-mix(in srgb, var(--line) 18%, transparent);
+		background: color-mix(in srgb, var(--accent-soft) 52%, transparent);
 		color: var(--ink);
-		font-size: 0.72rem;
+		font-size: 0.7rem;
 		font-weight: 700;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
+		letter-spacing: 0.03em;
 		border-radius: 2px;
+		line-height: 1.35;
 	}
 
 	.archive-date {
+		flex: 0 0 auto;
+		margin: 0;
+		padding-top: 0.12rem;
 		font-size: 0.78rem;
 		font-weight: 700;
 		letter-spacing: 0.12em;
@@ -772,12 +813,49 @@ const totalPosts = posts.length;
 			padding: 1.4rem;
 		}
 	}
+
+	@media (max-width: 759px) {
+		.heatmap-panel {
+			padding: 1rem;
+		}
+
+		.heatmap-header {
+			display: grid;
+			gap: 0.75rem;
+		}
+
+		.range-switch {
+			display: none;
+		}
+
+		.heatmap-row {
+			gap: 0.35rem;
+		}
+
+		.heatmap-tooltip {
+			max-width: min(18rem, calc(100vw - 2rem));
+		}
+
+		.archive-item {
+			padding: 0.85rem;
+		}
+
+		.archive-meta {
+			flex-direction: column;
+			gap: 0.5rem;
+		}
+
+		.archive-category-list {
+			justify-content: flex-start;
+		}
+	}
 </style>
 
 <script>
 	const panel = document.querySelector('.heatmap-panel');
 	const views = Array.from(document.querySelectorAll('[data-heatmap-view]'));
 	const rangeChips = Array.from(document.querySelectorAll('[data-range]'));
+	const rangeSelect = document.querySelector('[data-range-select]');
 	const tooltip = document.querySelector('[data-heatmap-tooltip]');
 	const tooltipTitle = document.querySelector('[data-tooltip-title]');
 	const tooltipCount = document.querySelector('[data-tooltip-count]');
@@ -914,6 +992,9 @@ const totalPosts = posts.length;
 			chip.classList.toggle('active', active);
 			chip.setAttribute('aria-pressed', String(active));
 		}
+		if (rangeSelect) {
+			rangeSelect.value = id;
+		}
 
 		activeView = target;
 		scroll = target;
@@ -924,6 +1005,8 @@ const totalPosts = posts.length;
 	for (const chip of rangeChips) {
 		chip.addEventListener('click', () => switchView(chip.dataset.range));
 	}
+
+	rangeSelect?.addEventListener('change', () => switchView(rangeSelect.value));
 
 	if (pinnedClear) {
 		pinnedClear.addEventListener('click', () => applyFilter(null));

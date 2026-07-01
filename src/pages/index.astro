@@ -23,7 +23,7 @@ const posts = (await getCollection('blog'))
 			<div class="page-shell">
 				<section class="intro-section pixel-panel">
 					<p class="eyebrow">Hello</p>
-					<h1 class="intro-title">I&rsquo;m SummerGua.</h1>
+					<h1 class="intro-title">I&rsquo;m Shilong Shu.</h1>
 					<p class="intro-body">
 						A frontend engineer who enjoys picking apart tools and writing them back up in plain
 						words. This is where I keep short notes on JavaScript, browsers, and the occasional
@@ -49,7 +49,7 @@ const posts = (await getCollection('blog'))
 									<div class="post-meta">
 										<ul class="post-category-list">
 											{post.data.tags.map((tag) => (
-												<li class="post-category">{tag}</li>
+												<li class="post-category">#{tag}</li>
 											))}
 										</ul>
 										<p class="post-date">{post.data.pubDate.toLocaleDateString('en-US')}</p>
@@ -165,8 +165,7 @@ const posts = (await getCollection('blog'))
 		color: var(--ink);
 		font-size: 0.72rem;
 		font-weight: 700;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
+		letter-spacing: 0.03em;
 		border-radius: 2px;
 	}
 

@@ -6,7 +6,11 @@ import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
 import ThemeScript from '../components/ThemeScript.astro';
 
-type Props = CollectionEntry<'blog'>['data'] & { showBack?: boolean; showHero?: boolean };
+type Props = CollectionEntry<'blog'>['data'] & {
+	showBack?: boolean;
+	showHero?: boolean;
+	wide?: boolean;
+};
 
 const {
 	title,
@@ -18,6 +22,7 @@ const {
 	headings = [],
 	showBack = true,
 	showHero = true,
+	wide = false,
 } = Astro.props;
 const tocHeadings = headings.filter((heading) => heading.depth <= 3);
 ---
@@ -31,6 +36,10 @@ const tocHeadings = headings.filter((heading) => heading.depth <= 3);
 				--article-width: min(100%, calc(var(--reading-width) + 84px));
 				display: grid;
 				gap: 0.85rem;
+			}
+
+			.article-shell.wide {
+				--article-width: min(100%, var(--content-width));
 			}
 
 			.article-hero,
@@ -119,7 +128,6 @@ const tocHeadings = headings.filter((heading) => heading.depth <= 3);
 				font-size: 0.72rem;
 				font-weight: 700;
 				letter-spacing: 0.06em;
-				text-transform: lowercase;
 				border-radius: 2px;
 			}
 
@@ -403,9 +411,24 @@ const tocHeadings = headings.filter((heading) => heading.depth <= 3);
 			}
 
 			@media (min-width: 760px) {
+				.article-shell {
+					--article-width: min(100%, var(--content-width));
+				}
+
 				.article-hero,
 				.article-body {
 					padding: 1.2rem 1.45rem;
+				}
+
+				.article-description,
+				.article-hero h1,
+				.prose :global(p),
+				.prose :global(ul),
+				.prose :global(ol),
+				.prose :global(pre),
+				.prose :global(blockquote),
+				.prose :global(.code-block) {
+					max-width: none;
 				}
 			}
 		</style>
@@ -414,7 +437,7 @@ const tocHeadings = headings.filter((heading) => heading.depth <= 3);
 	<body>
 		<Header />
 		<main>
-			<article class="article-shell">
+			<article class:list={['article-shell', { wide }]}>
 				{showHero && (
 					<div class="article-hero pixel-panel">
 						{showBack && (

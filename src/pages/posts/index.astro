@@ -43,7 +43,7 @@ const posts = (await getCollection('blog')).sort(
 							id="post-search"
 							class="search-input"
 							type="search"
-							placeholder="Search posts, categories, or keywords"
+							placeholder="Search posts, tags, or keywords"
 							aria-label="Search posts"
 						/>
 					</div>
@@ -66,7 +66,7 @@ const posts = (await getCollection('blog')).sort(
 									<div class="card-footer">
 										<ul class="category-list">
 											{post.data.tags.map((tag) => (
-												<li class="category">{tag}</li>
+												<li class="category">#{tag}</li>
 											))}
 										</ul>
 									</div>
@@ -109,6 +109,7 @@ const posts = (await getCollection('blog')).sort(
 
 	.search-field {
 		position: relative;
+		transition: transform 120ms ease;
 	}
 
 	.search-field .search-icon {
@@ -120,10 +121,27 @@ const posts = (await getCollection('blog')).sort(
 		color: var(--muted);
 		transform: translateY(-50%);
 		pointer-events: none;
+		transition: color 120ms ease;
 	}
 
 	.search-field .search-input {
 		padding-left: 2.4rem;
+	}
+
+	.search-field:focus-within {
+		transform: translate(-1px, -1px);
+	}
+
+	.search-field:focus-within .search-icon {
+		color: var(--ink);
+	}
+
+	.search-field:focus-within .search-input {
+		background: var(--panel);
+		border-color: var(--line);
+		box-shadow: 4px 4px 0 var(--shadow);
+		outline: 2px solid color-mix(in srgb, var(--accent) 42%, transparent);
+		outline-offset: 2px;
 	}
 
 	.post-grid {
@@ -148,8 +166,7 @@ const posts = (await getCollection('blog')).sort(
 		color: var(--ink);
 		font-size: 0.72rem;
 		font-weight: 700;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
+		letter-spacing: 0.03em;
 		border-radius: 2px;
 	}
 
