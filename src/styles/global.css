@@ -127,7 +127,83 @@ input {
 
 table {
 	width: 100%;
-	border-collapse: collapse;
+	border-collapse: separate;
+	border-spacing: 0;
+	margin: 1.5rem 0;
+	font-size: 0.92rem;
+	border: 1.5px solid var(--line);
+	border-radius: 2px;
+	box-shadow: 4px 4px 0 var(--shadow);
+	overflow: hidden;
+}
+
+thead th {
+	background: color-mix(in srgb, var(--ink) 78%, var(--accent) 22%);
+	color: var(--panel);
+	font-weight: 700;
+	font-size: 0.82rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	padding: 0.75rem 0.85rem;
+	text-align: left;
+	border-bottom: 1.5px solid var(--line);
+}
+
+thead th:not(:last-child) {
+	border-right: 1px solid color-mix(in srgb, var(--panel) 20%, var(--ink) 80%);
+}
+
+html[data-theme='dark'] thead th {
+	background: var(--bg-alt);
+	color: var(--ink);
+	border-bottom-color: var(--line);
+}
+
+html[data-theme='dark'] thead th:not(:last-child) {
+	border-right-color: var(--line);
+}
+
+tbody td {
+	padding: 0.6rem 0.85rem;
+	border-bottom: 1px solid var(--line-soft);
+	background: var(--panel);
+}
+
+tbody td:not(:last-child) {
+	border-right: 1px solid var(--line-soft);
+}
+
+tbody tr:last-child td {
+	border-bottom: none;
+}
+
+tbody tr:hover td {
+	background: color-mix(in srgb, var(--accent-soft) 35%, var(--panel) 65%);
+}
+
+tbody tr:nth-child(even) td {
+	background: color-mix(in srgb, var(--panel-soft) 50%, var(--panel) 50%);
+}
+
+tbody tr:nth-child(even):hover td {
+	background: color-mix(in srgb, var(--accent-soft) 35%, var(--panel-soft) 65%);
+}
+
+@media (max-width: 640px) {
+	table {
+		font-size: 0.82rem;
+		box-shadow: 3px 3px 0 var(--shadow);
+	}
+
+	thead th,
+	tbody td {
+		padding: 0.5rem 0.55rem;
+	}
+
+	thead th {
+		font-size: 0.72rem;
+		letter-spacing: 0.04em;
+	}
 }
 
 img {
