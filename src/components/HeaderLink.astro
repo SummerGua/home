@@ -12,7 +12,7 @@ const isActive =
 	(href === '/archive' && pathname.startsWith('/archive'));
 ---
 
-<a href={href} class:list={[className, { active: isActive }]} {...props}>
+<a href={href} class:list={[className, { active: isActive }]} aria-current={isActive ? 'page' : undefined} {...props}>
 	<slot />
 </a>
 <style>

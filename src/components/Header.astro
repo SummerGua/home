@@ -335,6 +335,11 @@ import HeaderLink from './HeaderLink.astro';
 		}
 	});
 
+		// Prevent full-page reload when clicking the nav link for the current page
+		for (const link of document.querySelectorAll('[aria-current="page"]')) {
+			link.addEventListener('click', (e) => e.preventDefault());
+		}
+
 	window.addEventListener('resize', () => {
 		if (window.matchMedia('(min-width: 760px)').matches) closeMenu();
                 syncMenuA11y();
